@@ -6,7 +6,7 @@ import {Checkbox} from '@/components/ui/checkbox';
 import {Label} from '@/components/ui/label';
 import {signIn} from '@/lib/actions/user.actions';
 import {authFormSchema} from '@/lib/utils';
-import {setUser} from '@/redux/userSlice';
+import {setPin} from '@/redux/pinSlice';
 import {zodResolver} from '@hookform/resolvers/zod';
 import {Loader2} from 'lucide-react';
 import Link from 'next/link';
@@ -46,10 +46,10 @@ export function SignInCard() {
           password: data.password,
         });
 
-        if (response) {
-          dispatch(setUser(response));
+        if (response?.pin) {
+          dispatch(setPin(response?.pin));
           router.push('/dashboard/access-verification');
-        } else return router.push('/');
+        } else return router.push('/sign-in');
       }
     } catch (error) {
       console.log(error);

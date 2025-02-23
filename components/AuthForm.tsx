@@ -62,9 +62,7 @@ const AuthForm = ({type}: {type: string}) => {
 
         const newUser = await signUp(userData);
 
-        // dispatch(setUser(newUser));
-
-        if (newUser) router.push('/dashboard/client');
+        if (newUser.verification === 'Not Verified') router.push('/dashboard/client');
       }
 
       if (type === 'sign-in') {
@@ -76,10 +74,9 @@ const AuthForm = ({type}: {type: string}) => {
         if (response?.pin) {
           // Dispatch the response to Redux store
           dispatch(setPin(response?.pin));
-          router.push('/dashboard/access-verification');
         }
+        router.push('/dashboard/access-verification');
       }
-      console.log(form.formState.errors);
     } catch (error) {
       console.log(error);
     } finally {
