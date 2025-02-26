@@ -3,13 +3,11 @@ import {persistReducer, persistStore} from 'redux-persist';
 import storage from 'redux-persist/lib/storage'; // defaults to localStorage
 import accountsReducer from './accountsDataSlice';
 import transferReducer from './createTransferDataSlice';
-import pinReducer from './pinSlice';
 import transactionReducer from './transactionSlice';
 import userReducer from './userSlice';
 
 // Combine all reducers into a single root reducer
 const appReducer = combineReducers({
-  pin: pinReducer,
   transaction: transactionReducer,
   user: userReducer,
   accounts: accountsReducer,

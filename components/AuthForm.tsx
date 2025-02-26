@@ -1,9 +1,9 @@
 'use client';
 import {Button} from '@/components/ui/button';
 import {Form} from '@/components/ui/form';
+import {toast} from '@/hooks/use-toast';
 import {signIn, signUp} from '@/lib/actions/user.actions';
-import {authFormSchema, generatePin} from '@/lib/utils';
-import {setPin} from '@/redux/pinSlice';
+import {authFormSchema} from '@/lib/utils';
 import {zodResolver} from '@hookform/resolvers/zod';
 import {Loader2} from 'lucide-react';
 import Link from 'next/link';
@@ -14,7 +14,7 @@ import {useDispatch} from 'react-redux';
 import {z} from 'zod';
 import CustomInput from './CustomInput';
 
-const AuthForm = ({type}: {type: string}) => {
+const AuthForm = ({type, role}: {type: string; role: string}) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
@@ -41,11 +41,9 @@ const AuthForm = ({type}: {type: string}) => {
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsLoading(true);
-    console.log(form.formState.errors);
 
-    console.log('i am running');
     try {
-      if (type === 'sign-up') {
+      if (type === 'sign-up' && (role === 'admin' || role === 'user')) {
         const userData = {
           email: data.email,
           password: data.password,
@@ -57,12 +55,16 @@ const AuthForm = ({type}: {type: string}) => {
           postalCode: data.postalCode!,
           country: data.country!,
           phone: data.phone!,
-          pin: generatePin(4),
+          role: role,
         };
 
-        const newUser = await signUp(userData);
+        const $id = await signUp(userData);
 
-        if (newUser.verification === 'Not Verified') router.push('/dashboard/client');
+        if ($id !== '') {
+          router.push(
+            `/authenticate/create-access-verification/?$id=${$id}&email=${data.email}&password=${data.password}`
+          );
+        }
       }
 
       if (type === 'sign-in') {
@@ -71,11 +73,17 @@ const AuthForm = ({type}: {type: string}) => {
           password: data.password,
         });
 
+        console.log('response', response);
+
         if (response?.pin) {
-          // Dispatch the response to Redux store
-          dispatch(setPin(response?.pin));
+          router.push(`/authenticate/access-verification/?pin=${response?.pin}`);
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Login failed!',
+            description: 'Inavalid Email or password, Please try again!.',
+          });
         }
-        router.push('/dashboard/access-verification');
       }
     } catch (error) {
       console.log(error);
@@ -88,6 +96,9 @@ const AuthForm = ({type}: {type: string}) => {
     <section className="auth-form">
       <header className="flex flex-col gap-5 md:gap-8">
         <div className="flex flex-col gap-1 md:gap-3">
+          <h1 className="text-16 lg:text-32 mb-8 font-bold  text-gray-900">
+            {role === 'admin' ? 'ADMIN USER ONLY' : ''}
+          </h1>
           <h1 className="text-24 lg:text-36 font-semibold text-gray-900">
             {type === 'sign-in' ? 'Sign In' : 'Sign Up'}
           </h1>
@@ -189,11 +200,6 @@ const AuthForm = ({type}: {type: string}) => {
               )}
             </Button>
           </div>
-          <button
-            type="button"
-            onClick={() => console.log('Validation errors:', form.formState.errors)}>
-            Debug Validation
-          </button>
         </form>
       </Form>
 
@@ -201,7 +207,13 @@ const AuthForm = ({type}: {type: string}) => {
         <p className="text-14 font-normal text-gray-600">
           {type === 'sign-in' ? "Don't have an account?" : 'Already have an account?'}
         </p>
-        <Link href={type === 'sign-in' ? '/sign-up' : '/sign-in'} className="form-link">
+        <Link
+          href={
+            type === 'sign-in'
+              ? `/auth/${role === 'user' ? 'client' : 'admin'}/sign-up`
+              : `/auth/${role === 'user' ? 'client' : 'admin'}/sign-in`
+          }
+          className="form-link">
           {type === 'sign-in' ? 'Sign up' : 'Sign in'}
         </Link>
       </footer>

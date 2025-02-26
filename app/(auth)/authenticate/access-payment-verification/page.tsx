@@ -137,7 +137,7 @@ const TranssferVerification = () => {
                   <FormControl>
                     <InputOTP maxLength={6} {...field}>
                       <InputOTPGroup>
-                        <InputOTPSlot index={0} />
+                        <InputOTPSlot index={0} autoFocus />
                         <InputOTPSlot index={1} />
                         <InputOTPSlot index={2} />
                         <InputOTPSlot index={3} />

@@ -159,32 +159,70 @@ export default function TransactionsPage() {
     }
   };
 
+  const updateAccountBalance = async (transaction: any, account: any) => {
+    if (transaction?.status === 'success') {
+      if (account?.$id === transaction?.senderAccountId) {
+        await updateAccount({
+          documentId: account?.$id,
+          updates: {
+            currentBalance:
+              transaction?.type === 'debit'
+                ? account?.currentBalance - transaction?.amount
+                : account?.currentBalance + transaction?.amount,
+          },
+        });
+      }
+
+      toast({
+        variant: 'success',
+        title: 'Current balance updated',
+        description: `Current balance updated!.`,
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
     const amount = parseFloat(formData.get('amount') as string);
-    const type = formData.get('type');
+    const type = formData.get('type') as string; // Ensure type is a string
     const accountId = id as string;
     const account: any = await getAccount({accountId});
-
+    const accountData = account?.data;
     const transferLimit = account?.transferlimit || '500';
     const mintransfer = account?.mintransfer || '100';
-    const accountBalance = account?.currentBalance || 0;
+    const accountBalance = accountData?.currentBalance || 0;
 
-    if (amount > accountBalance && type === 'debit') {
-      setErrors({amount: 'Insufficient balance'});
-      return;
+    // Validation for debit transactions
+    if (type === 'debit') {
+      if (amount > accountBalance) {
+        setErrors({amount: 'Insufficient balance'});
+        return;
+      }
+
+      if (amount > parseFloat(transferLimit)) {
+        setErrors({amount: `Amount exceeds transfer limit of $${transferLimit}`});
+        return;
+      }
+
+      if (amount < parseFloat(mintransfer)) {
+        setErrors({amount: `Amount must be at least $${mintransfer}`});
+        return;
+      }
     }
 
-    if (amount > parseFloat(transferLimit) && type === 'debit') {
-      setErrors({amount: `Amount exceeds transfer limit of $${transferLimit}`});
-      return;
-    }
+    // Validation for credit transactions
+    if (type === 'credit') {
+      if (amount > parseFloat(transferLimit)) {
+        setErrors({amount: `Amount exceeds transfer limit of $${transferLimit}`});
+        return;
+      }
 
-    if (amount < parseFloat(mintransfer) && type === 'debit') {
-      setErrors({amount: `Amount must be at least $${mintransfer}`});
-      return;
+      if (amount < parseFloat(mintransfer)) {
+        setErrors({amount: `Amount must be at least $${mintransfer}`});
+        return;
+      }
     }
 
     // Clear errors if validation passes
@@ -198,11 +236,11 @@ export default function TransactionsPage() {
       recipientName: formData.get('recipientName'),
       recipientBank: formData.get('recipientBank'),
       channel: formData.get('channel'),
-      category: 'formData',
+      category: '',
       routingNo: formData.get('routingNo'),
       accountNo: formData.get('accountNo'),
       description: formData.get('description'),
-      amount: parseFloat(formData.get('amount') as string) || currentTransaction?.amount,
+      amount: parseFloat(formData.get('amount') as string),
       type: formData.get('type'),
       status: formData.get('status'),
     };
@@ -224,31 +262,13 @@ export default function TransactionsPage() {
           updates: updatedFields,
         });
 
+        await updateAccountBalance(updatedTransaction, accountData);
+
         setTransactions(
           transactions.map((transaction) =>
             transaction.$id === currentTransaction.$id ? updatedTransaction : transaction
           )
         );
-
-        if (updatedTransaction.status === 'Success') {
-          if (account?.$id === updatedTransaction.senderAccountId) {
-            await updateAccount({
-              documentId: account.$id,
-              updates: {
-                currentBalance:
-                  updatedTransaction.type === 'debit'
-                    ? account.currentBalance - updatedTransaction.amount
-                    : account.currentBalance + updatedTransaction.amount,
-              },
-            });
-          }
-
-          toast({
-            variant: 'success',
-            title: 'Current balance updated',
-            description: `Current balance updated!.`,
-          });
-        }
 
         toast({
           variant: 'success',
@@ -264,6 +284,8 @@ export default function TransactionsPage() {
       }
     } else {
       const newTransaction = await createTransaction(transactionData);
+
+      await updateAccountBalance(newTransaction, accountData);
 
       if (newTransaction) {
         toast({
@@ -298,7 +320,7 @@ export default function TransactionsPage() {
 
             <AutoGenerateTransactionsPage userId={userId as string} id={id as string} />
           </div>
-          <DialogContent className="bg-slate-200 border border-gray-700">
+          <DialogContent className="bg-slate-200 border border-gray-700 max-sm:max-w-sm max-sm:max-h-[85vh] max-sm:overflow-y-auto ">
             <DialogHeader>
               <DialogTitle>
                 {currentTransaction ? 'Edit Transaction' : 'Add New Transaction'}
@@ -375,24 +397,24 @@ export default function TransactionsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="status" className="text-blue-800">
+                  <Label htmlFor="channel" className="text-blue-800">
                     Channel
                   </Label>
-                  <Select name="status" defaultValue={currentTransaction?.channel}>
+                  <Select name="channel" defaultValue={currentTransaction?.channel}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder="Select channel" />
                     </SelectTrigger>
                     <SelectContent className="opacity-100 bg-slate-50 ">
-                      <SelectItem className="cursor-pointer" value="online">
-                        Online
+                      <SelectItem className="cursor-pointer" value="online-mobile">
+                        mobile
                       </SelectItem>
-                      <SelectItem className="cursor-pointer" value="web">
+                      <SelectItem className="cursor-pointer" value="online-web">
                         Web
                       </SelectItem>
-                      <SelectItem className="cursor-pointer" value="transfer">
-                        In-transfer
+                      <SelectItem className="cursor-pointer" value="wire-transfer">
+                        wire-transfer
                       </SelectItem>
-                      <SelectItem className="cursor-pointer" value="cash">
+                      <SelectItem className="cursor-pointer" value="cash-deposit">
                         Cash-D
                       </SelectItem>
                     </SelectContent>

@@ -56,6 +56,13 @@ export async function getLoggedInUser() {
   }
 }
 
+export async function routeByRole() {
+  const {account} = await createSessionClient();
+  const result = await account.get();
+
+  return result;
+}
+
 export const signIn = async ({email, password}: signInProps) => {
   try {
     const {account} = await createAdminClient();
@@ -76,15 +83,47 @@ export const signIn = async ({email, password}: signInProps) => {
   }
 };
 
+// export async function labelUpdate() {
+//   const {account} = await createAdminClient();
+
+//   const prefs = account.getPrefs();
+
+//   const result = await account.updatePrefs({label: 'user'});
+
+//   console.log('result from label', result);
+//   console.log('pref from label', prefs);
+
+//   return result;
+
+export async function labelUpdate(userId: string) {
+  try {
+    // Use the session client instead of the admin client
+    const {user} = await createAdminClient();
+
+    const result = await user.updateLabels(userId, ['userytyt']); // Set labels to ['user']
+    console.log('Labels updated successfully:', result);
+
+    return result;
+  } catch (error) {
+    console.error('Error updating preferences:', error);
+    throw error; // Re-throw the error for handling in the calling function
+  }
+}
+// }
+
 export const signUp = async ({password, ...userData}: SignUpParams) => {
   const {email, firstname, lastname} = userData;
 
   let newUserAccount;
 
   try {
-    const {account, database} = await createAdminClient();
+    const {account, database, user} = await createAdminClient();
 
     newUserAccount = await account.create(ID.unique(), email, password, `${firstname} ${lastname}`);
+
+    const userId = newUserAccount.$id;
+
+    await user.updateLabels(userId, ['user']);
 
     if (!newUserAccount) throw new Error('Error creating user');
 
@@ -92,8 +131,6 @@ export const signUp = async ({password, ...userData}: SignUpParams) => {
       ...userData,
       userId: newUserAccount.$id,
     });
-
-    const session = await account.createEmailPasswordSession(email, password);
 
     const savingAccountNo = generateAccountNumber();
     const currentAccountNo = generateAccountNumber();
@@ -136,14 +173,7 @@ export const signUp = async ({password, ...userData}: SignUpParams) => {
 
     if (!checkingCard) return 'failed to create a checking account card for this account';
 
-    (await cookies()).set('appwrite-session', session.secret, {
-      path: '/',
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: true,
-    });
-
-    return parseStringify(newUser);
+    return parseStringify(newUser.$id);
   } catch (error) {
     console.error('Error', error);
   }
@@ -409,3 +439,49 @@ export const updateUser = async ({userId, updates}: {userId: string; updates: Pa
     console.error(error || {error: 'Failed to update user account info'});
   }
 };
+
+export const updateUserWithPin = async ({
+  documentId,
+  updates,
+}: {
+  documentId: string;
+  updates: Partial<any>;
+}) => {
+  try {
+    const {database} = await createAdminClient();
+
+    const updatedUser = await database.updateDocument(
+      DATABASE_ID!,
+      USER_COLLECTION_ID!,
+      documentId,
+      updates
+    );
+
+    return parseStringify(updatedUser);
+  } catch (error) {
+    console.error(error || {error: 'Failed to update user account info'});
+  }
+};
+
+export async function processUserVerification(user: User) {
+  try {
+    // const today = new Date().toISOString().split('T')[0];
+    const {database} = await createAdminClient();
+
+    const documentId = user.$id;
+
+    if (user.verification === 'Verified' && !user.verificationProcessed === true) {
+      // Update user record to prevent function from running again
+      await database.updateDocument(DATABASE_ID!, USER_COLLECTION_ID!, documentId, {
+        verificationProcessed: true,
+      });
+
+      console.log('Verification process executed successfully.');
+
+      return true;
+    }
+  } catch (error) {
+    console.error('Error processing verification:', error);
+  }
+  return false;
+}

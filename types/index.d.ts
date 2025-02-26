@@ -44,6 +44,8 @@ declare type User = {
   userId: string;
   pin: string;
   phone: string;
+  $updatedAt: string;
+  verificationProcessed: boolean;
 };
 
 declare type NewUserParams = {
@@ -75,6 +77,8 @@ declare type Account = {
   mintransfer: string;
   userId: string;
   createdAt: Date;
+  status: string;
+  message?: string;
 };
 
 declare type Transaction = {
@@ -165,7 +169,8 @@ declare interface HeaderBoxProps {
   type?: 'title' | 'greeting';
   title: string;
   subtext: string;
-  user?: string;
+  user?: User;
+  verifyState: boolean;
 }
 
 declare interface MobileNavProps {

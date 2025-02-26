@@ -2,8 +2,7 @@
 
 import CustomInput from '@/components/CustomInput';
 import {Button} from '@/components/ui/button';
-import {Form} from '@/components/ui/form';
-import {Label} from '@/components/ui/label';
+import {Form, FormLabel} from '@/components/ui/form';
 import {useToast} from '@/hooks/use-toast';
 import {ImageUploader} from '@/lib/actions/image.action';
 import {updateUser} from '@/lib/actions/user.actions';
@@ -31,7 +30,12 @@ const page = () => {
       nextOfKinAddress: z.string().min(3).max(50),
       photoId: z.instanceof(FileList).refine((files) => files.length > 0, 'Selfie is required'),
       ssnPhoto: z.instanceof(FileList).refine((files) => files.length > 0, 'SSN photo is required'),
-      idCard: z.instanceof(FileList).refine((files) => files.length > 0, 'ID card is required'),
+      idCardFront: z
+        .instanceof(FileList)
+        .refine((files) => files.length > 0, 'ID card front is required'),
+      idCardBack: z
+        .instanceof(FileList)
+        .refine((files) => files.length > 0, 'ID card back is required'),
       proofOfAddress: z
         .instanceof(FileList)
         .refine((files) => files.length > 0, 'Proof of address is required'),
@@ -54,18 +58,21 @@ const page = () => {
 
     const photoId = data.photoId[0];
     const ssnPhoto = data.ssnPhoto[0];
-    const idCard = data.idCard[0];
+    const idCardFront = data.idCardFront[0];
+    const idCardBack = data.idCardBack[0];
     const proofOfAddress = data.proofOfAddress[0];
 
     let photoIdUrl: string | null = null;
     let ssnPhotoUrl: string | null = null;
-    let idCardUrl: string | null = null;
+    let idCardFrontUrl: string | null = null;
+    let idCardBackUrl: string | null = null;
     let proofOfAddressUrl: string | null = null;
 
     try {
       if (photoId) photoIdUrl = await ImageUploader(photoId);
       if (ssnPhoto) ssnPhotoUrl = await ImageUploader(ssnPhoto);
-      if (idCard) idCardUrl = await ImageUploader(idCard);
+      if (idCardFront) idCardFrontUrl = await ImageUploader(idCardFront);
+      if (idCardBack) idCardBackUrl = await ImageUploader(idCardBack);
       if (proofOfAddress) proofOfAddressUrl = await ImageUploader(proofOfAddress);
 
       const userData = {
@@ -75,15 +82,13 @@ const page = () => {
         nextOfKinAddress: data.nextOfKinAddress,
         photoId: photoIdUrl,
         ssnPhoto: ssnPhotoUrl,
-        idCard: idCardUrl,
+        idCardFront: idCardFrontUrl,
+        idCardBack: idCardBackUrl,
         proofOfAddress: proofOfAddressUrl,
         verification: 'Verified',
       };
 
       const newUser = await updateUser({userId: userId as string, updates: userData});
-
-      console.log('stting data=========>', userData);
-      console.log('setup data on success=========>', newUser);
 
       if (newUser?.verification === 'Verified') {
         router.push('/dashboard/client');
@@ -115,74 +120,133 @@ const page = () => {
         </div>
       </header>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <CustomInput
-            control={form.control}
-            name="ssn"
-            label="SSN"
-            placeholder="Enter your ssn"
-            disabled={isLoading}
-          />
-          <CustomInput
-            control={form.control}
-            name="nextOfKin"
-            label="Next Of Kin"
-            placeholder="Enter name of next of kin"
-            disabled={isLoading}
-          />
-          <CustomInput
-            control={form.control}
-            name="nextOfKinRelationship"
-            label="Next Of Kin Relationship"
-            placeholder="Enter your Relationship next of Kin"
-            disabled={isLoading}
-          />
-          <CustomInput
-            control={form.control}
-            name="nextOfKinAddress"
-            label="Next Of Kin Address"
-            placeholder="Enter address next of Kin"
-            disabled={isLoading}
-          />
+      <div>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-screen">
+            <span className="flex gap-1 items-center text-xl font-medium text-blue-700">
+              <Loader2 className="animate-spin" />
+              Loading...
+            </span>
+          </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <CustomInput
+                control={form.control}
+                name="ssn"
+                label="SSN"
+                placeholder="Enter your ssn"
+                disabled={isLoading}
+              />
+              <CustomInput
+                control={form.control}
+                name="nextOfKin"
+                label="Next Of Kin"
+                placeholder="Enter name of next of kin"
+                disabled={isLoading}
+              />
+              <CustomInput
+                control={form.control}
+                name="nextOfKinRelationship"
+                label="Next Of Kin Relationship"
+                placeholder="Enter your Relationship next of Kin"
+                disabled={isLoading}
+              />
+              <CustomInput
+                control={form.control}
+                name="nextOfKinAddress"
+                label="Next Of Kin Address"
+                placeholder="Enter address next of Kin"
+                disabled={isLoading}
+              />
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="photoId">Upload selfie</Label>
-            <input type="file" id="photoId" {...form.register('photoId')} disabled={isLoading} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="ssnPhoto">Upload SSN Image</Label>
-            <input type="file" id="ssnPhoto" {...form.register('ssnPhoto')} disabled={isLoading} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="idCard">Upload ID Photo</Label>
-            <input type="file" id="idCard" {...form.register('idCard')} disabled={isLoading} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="proofOfAddress">Upload proof Of Address</Label>
-            <input
-              type="file"
-              id="proofOfAddress"
-              {...form.register('proofOfAddress')}
-              disabled={isLoading}
-            />
-          </div>
+              <div className="flex flex-col gap-2">
+                <FormLabel htmlFor="photoId">
+                  <span className="text-sm text-gray-800"> Selfie</span>
+                  <span className="italic text-[12px] text-purple-400">(Passport photograph)</span>
+                </FormLabel>
+                <input
+                  type="file"
+                  id="photoId"
+                  {...form.register('photoId')}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <FormLabel htmlFor="ssnPhoto">
+                  <span className="text-sm text-gray-800"> SSN card</span>{' '}
+                  <span className="italic text-[12px] text-purple-400">(Front only)</span>
+                </FormLabel>
+                <input
+                  type="file"
+                  id="ssnPhoto"
+                  {...form.register('ssnPhoto')}
+                  disabled={isLoading}
+                />
+              </div>
 
-          <span>{error}</span>
+              <div className="flex flex-col gap-2">
+                <FormLabel htmlFor="idCard">
+                  <span className="text-sm text-gray-800">
+                    Driver's License / Passport ID - (Front)
+                  </span>
+                  <span className="italic text-[12px] text-purple-400">(Must be valid)</span>
+                </FormLabel>
+                <input
+                  type="file"
+                  id="idCardfront"
+                  {...form.register('idCardFront')}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <FormLabel htmlFor="idCard">
+                  <span className="text-sm text-gray-800">
+                    {' '}
+                    Driver's License / Passport ID - (Back)
+                  </span>
+                  <span className="italic text-[12px] text-purple-400">(Must be valid)</span>
+                </FormLabel>
+                <input
+                  type="file"
+                  id="idCardback"
+                  {...form.register('idCardBack')}
+                  disabled={isLoading}
+                />
+              </div>
 
-          <div className="flex flex-col gap-4">
-            <Button type="submit" disabled={isLoading} className="form-btn">
-              {isLoading ? (
-                <>
-                  <Loader2 size={20} className="animate-spin" /> &nbsp; Loading...
-                </>
-              ) : (
-                'Finish setup'
-              )}
-            </Button>
-          </div>
-        </form>
-      </Form>
+              <div className="flex flex-col gap-2">
+                <FormLabel htmlFor="proofOfAddress">
+                  <span className="text-sm text-gray-800"> Proof Of Address </span>
+                  <span className="italic text-[12px] text-purple-400">
+                    (Utility / Electricity bill)
+                  </span>
+                </FormLabel>
+                <input
+                  type="file"
+                  id="proofOfAddress"
+                  {...form.register('proofOfAddress')}
+                  disabled={isLoading}
+                />
+              </div>
+
+              <span>{error}</span>
+
+              <div className="flex flex-col gap-4">
+                <Button type="submit" disabled={isLoading} className="form-btn">
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" /> &nbsp; Loading...
+                    </>
+                  ) : (
+                    'Finish setup'
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
+      </div>
     </section>
   );
 };

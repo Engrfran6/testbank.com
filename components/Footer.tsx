@@ -24,7 +24,7 @@ const Footer = ({type = 'desktop'}: FooterProps) => {
     await persistor.purge();
     await persistor.flush(); // Ensures all updates are written before logout
 
-    router.push('/sign-in');
+    router.push('/auth/client/sign-in');
   };
 
   return (

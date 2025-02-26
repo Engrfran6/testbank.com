@@ -266,7 +266,7 @@ export default function UsersPage() {
           <DialogTrigger asChild className="mr-4">
             <Button onClick={() => setCurrentUser(null)}>Add New User</Button>
           </DialogTrigger>
-          <DialogContent className="bg-slate-200 border border-gray-700">
+          <DialogContent className="bg-slate-200 border border-gray-700 max-sm:max-w-sm max-sm:max-h-[85vh] max-sm:overflow-y-auto ">
             <DialogHeader>
               <DialogTitle>{currentUser ? 'Edit User' : 'Add New User'}</DialogTitle>
             </DialogHeader>
@@ -404,7 +404,7 @@ export default function UsersPage() {
                       <SelectItem value="Active" className="cursor-pointer">
                         Active
                       </SelectItem>
-                      <SelectItem value="Inactive" className="cursor-pointer">
+                      <SelectItem value="InActive" className="cursor-pointer">
                         Inactive
                       </SelectItem>
                       <SelectItem value="Suspended" className="cursor-pointer">

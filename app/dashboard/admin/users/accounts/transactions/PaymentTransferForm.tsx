@@ -7,6 +7,7 @@ import {useState} from 'react';
 import {useForm, useWatch} from 'react-hook-form';
 import * as z from 'zod';
 
+import {BankDropdown} from '@/components/BankDropdown';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -16,13 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {createTransaction} from '@/lib/actions/transaction.actions';
-import {cn, generatePin, generateReceiverAccountId, parseStringify} from '@/lib/utils';
-import {setAccountId, setOtp, setTransactionDetails} from '@/redux/createTransferDataSlice';
-import {Account, PaymentTransferFormProps} from '@/types';
-import {useDispatch} from 'react-redux';
-import {BankDropdown} from './BankDropdown';
-import {Button} from './ui/button';
+import {Button} from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -31,9 +26,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from './ui/form';
-import {Input} from './ui/input';
-import {Textarea} from './ui/textarea';
+} from '@/components/ui/form';
+import {Input} from '@/components/ui/input';
+import {Textarea} from '@/components/ui/textarea';
+import {createTransaction} from '@/lib/actions/transaction.actions';
+import {cn, generatePin, generateReceiverAccountId, parseStringify} from '@/lib/utils';
+import {setAccountId, setOtp, setTransactionDetails} from '@/redux/createTransferDataSlice';
+import {Account, PaymentTransferFormProps} from '@/types';
+import {useDispatch} from 'react-redux';
 
 const formSchema = z.object({
   senderAccountId: z.string().min(4, 'Please select a valid account'),
@@ -55,7 +55,6 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [limitAlert, setLimitAlert] = useState(false);
   const [limitAlert2, setLimitAlert2] = useState(false);
-  const [statusAlert, setStatusAlert] = useState(false);
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
 
@@ -78,8 +77,6 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
 
   const transferLimit = account?.transferlimit || '500';
   const mintransfer = account?.mintransfer || '100';
-  const status = account?.status;
-  const statusMessage = account?.message;
   const accountBalance = account?.currentBalance || 0;
 
   // Watch the amount field to validate against account balance
@@ -92,11 +89,6 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
     setIsLoading(true);
 
     try {
-      if (status === 'inactive' || status === 'frozen') {
-        setStatusAlert(true);
-        return;
-      }
-
       // Check if the amount exceeds the account balance
       if (parseFloat(data.amount) > accountBalance) {
         form.setError('amount', {
@@ -142,7 +134,7 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
         description: data.transferNnote,
         senderAccountId: data.senderAccountId,
         receiverAccountId: generateReceiverAccountId(20),
-        channel: 'online-mobile',
+        channel: 'ACCOUNT_COLLECTION_ID-mobile',
         accountNo: data.accountNo,
         routingNo: data.routingNo,
         recipientName: data.receipentName,
@@ -161,7 +153,7 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
 
         form.reset();
       }
-      router.push('/authenticate/access-payment-verification');
+      router.push('/dashboard/access-payment-verification');
     } catch (error) {
       console.error('Submitting create transfer request failed: ', error);
       form.setError('root', {
@@ -177,11 +169,7 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
     setLimitAlert(false);
   };
   const handleProceed2 = async () => {
-    setLimitAlert2(false);
-  };
-
-  const handleProceed3 = async () => {
-    setStatusAlert(false);
+    setLimitAlert(false);
   };
 
   return (
@@ -376,8 +364,9 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
                   </FormControl>
                   <FormMessage className="text-12 text-red-500" />
 
-                  <div className="underline text-sm pt-1 text-red-400">
-                    <span> Transfer limit: ${transferLimit}</span>
+                  <div className="bg-red-300">
+                    <span> min transfer: 100</span>
+                    <span> max transfer: 500</span>
                   </div>
                 </div>
               </div>
@@ -398,81 +387,38 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
         </div>
       </form>
 
-      {statusAlert && (
-        <AlertDialog open={statusAlert} onOpenChange={setLimitAlert}>
-          <AlertDialogContent className="bg-red-200 max-sm:max-w-sm">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-red-600 text-md ">
-                OOPS! account activities are temporary restricted!
-              </AlertDialogTitle>
-              <AlertDialogDescription className="border-y-2 py-4">
-                {statusMessage}
-              </AlertDialogDescription>
-              <p className="mt-8 text-[11px] leading-4">
-                <span className="text-blue-700 italic underline"> Need help ? </span>
-                <span className="italic">
-                  Contact a customer representative or call us at [bank phone number]
-                </span>
-              </p>
-            </AlertDialogHeader>
-
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleProceed3} className="w-1/4 mx-auto">
-                Cancel
-              </AlertDialogCancel>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-
       {limitAlert && (
         <AlertDialog open={limitAlert} onOpenChange={setLimitAlert}>
-          <AlertDialogContent className="bg-blue-200 max-sm:max-w-sm">
+          <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-red-600">Account limit exceeded!</AlertDialogTitle>
-              <AlertDialogDescription className="border-y-2 py-4">
+              <AlertDialogTitle className="text-red-700">Account limit exceeded!</AlertDialogTitle>
+              <AlertDialogDescription className="border-t-2 pt-4">
                 The amount{' '}
                 <span className="font-bold text-red-700 underline">${parseFloat(amount)}</span> you
                 are trying to transfer exceeds your account daily limit of{' '}
                 <span className="font-bold text-red-700 underline"> ${transferLimit}</span>.
               </AlertDialogDescription>
-              <p className="mt-8 text-[11px] leading-4">
-                <span className="text-blue-700 italic underline"> Need help ? </span>
-                <span className="italic">
-                  Contact a customer representative or call us at [bank phone number]
-                </span>
-              </p>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleProceed} className="w-1/4 mx-auto">
-                Cancel
-              </AlertDialogCancel>
+              <AlertDialogCancel onClick={handleProceed}>Cancel</AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       )}
       {limitAlert2 && (
         <AlertDialog open={limitAlert2} onOpenChange={setLimitAlert2}>
-          <AlertDialogContent className="bg-blue-200 max-sm:max-w-sm">
+          <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-red-600 flex">Minimum transfer!</AlertDialogTitle>
-              <AlertDialogDescription className="border-y-2 py-4">
+              <AlertDialogTitle className="text-red-700 flex">Minimum transfer!</AlertDialogTitle>
+              <AlertDialogDescription className="border-t-2 pt-4">
                 You can not withdraw{' '}
                 <span className="font-bold text-red-700 underline"> ${parseFloat(amount)}</span>, it
                 is below the minimum transfer limit of{' '}
                 <span className="font-bold underline text-red-700">${mintransfer}</span>
               </AlertDialogDescription>
-              <p className="mt-8 text-[11px] leading-4">
-                <span className="text-blue-700 italic underline"> Need help ? </span>
-                <span className="italic">
-                  Contact a customer representative or call us at [bank phone number]
-                </span>
-              </p>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleProceed2} className="w-1/4 mx-auto">
-                Cancel
-              </AlertDialogCancel>
+              <AlertDialogCancel onClick={handleProceed2}>Cancel</AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

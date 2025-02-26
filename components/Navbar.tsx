@@ -21,7 +21,7 @@ const Navbar = () => {
     await persistor.purge();
     await persistor.flush(); // Ensures all updates are written before logout
 
-    router.push('/sign-in');
+    router.push('/auth/client/sign-in');
   };
   return (
     <nav className="hidden md:flex fixed w-full border-b bg-white  shadow-sm z-50">

@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {Textarea} from '@/components/ui/textarea';
 import {useToast} from '@/hooks/use-toast';
 import {getAccounts} from '@/lib/actions/account.actions';
 import {deleteAccount, updateAccount} from '@/lib/actions/user.actions';
@@ -39,6 +40,7 @@ declare type Account = {
   routingNumber: string;
   otp: string;
   createdAt: string;
+  message: string;
   updateAt: string;
   transferlimit: number;
   mintransfer: number;
@@ -65,6 +67,7 @@ export default function AccountsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentAccount, setCurrentAccount] = useState<Account | null>(null);
   const {toast} = useToast();
+  const [selectedStatus, setSelectedStatus] = useState('active');
 
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId') || 'No User ID';
@@ -162,6 +165,7 @@ export default function AccountsPage() {
       transferlimit: formData.get('transferlimit'),
       mintransfer: formData.get('mintransfer'),
       status: formData.get('status'),
+      message: formData.get('message'),
     };
 
     if (currentAccount) {
@@ -228,7 +232,7 @@ export default function AccountsPage() {
               Add New Account
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-slate-200 border border-gray-700">
+          <DialogContent className="bg-slate-200 border border-gray-700 max-sm:max-w-sm max-sm:max-h-[85vh] max-sm:overflow-y-auto ">
             <DialogHeader>
               <DialogTitle>{currentAccount ? 'Edit Account' : 'Add New Account'}</DialogTitle>
             </DialogHeader>
@@ -283,7 +287,10 @@ export default function AccountsPage() {
               </div>
               <div>
                 <Label htmlFor="status">Status</Label>
-                <Select name="status" defaultValue={currentAccount?.status}>
+                <Select
+                  name="status"
+                  defaultValue={currentAccount?.status}
+                  onValueChange={(e) => setSelectedStatus(e)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -292,7 +299,7 @@ export default function AccountsPage() {
                       Active
                     </SelectItem>
                     <SelectItem className="cursor-pointer" value="inactive">
-                      Inactive
+                      Inactive (lock account)
                     </SelectItem>
                     <SelectItem className="cursor-pointer" value="frozen">
                       Frozen
@@ -300,6 +307,19 @@ export default function AccountsPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {(selectedStatus === 'inactive' || selectedStatus === 'frozen') && (
+                <div>
+                  <Label htmlFor="message">Status Message</Label>
+                  <Textarea
+                    id="message"
+                    name="message"
+                    defaultValue={currentAccount?.message}
+                    placeholder="Enter status reason..."
+                    required
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-2 items-center">
                 <div>

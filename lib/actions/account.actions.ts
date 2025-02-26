@@ -36,6 +36,7 @@ export const getAccounts = async ({userId}: getAccountsProps) => {
           routingNumber: acc.routingNumber,
           transferlimit: acc.transferlimit,
           mintransfer: acc.mintransfer,
+          message: acc.message,
           userId: acc.userId,
           createdAt: formatDateT(acc.$createdAt),
           updateAt: formatDateT(acc.$updatedAt),
@@ -129,6 +130,7 @@ export const getAccount = async ({accountId}: getAccountProps) => {
       routingNumber: userAccount.routingNumber,
       userId: userAccount.userId,
       transferlimit: userAccount.transferlimit,
+      status: userAccount.status,
       createdAt: userAccount.createdAt,
       mintransfer: userAccount.mintransfer,
     };

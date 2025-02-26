@@ -6,7 +6,6 @@ import {Checkbox} from '@/components/ui/checkbox';
 import {Label} from '@/components/ui/label';
 import {signIn} from '@/lib/actions/user.actions';
 import {authFormSchema} from '@/lib/utils';
-import {setPin} from '@/redux/pinSlice';
 import {zodResolver} from '@hookform/resolvers/zod';
 import {Loader2} from 'lucide-react';
 import Link from 'next/link';
@@ -46,10 +45,9 @@ export function SignInCard() {
           password: data.password,
         });
 
-        if (response?.pin) {
-          dispatch(setPin(response?.pin));
-          router.push('/dashboard/access-verification');
-        } else return router.push('/sign-in');
+        if (response?.pin !== '') {
+          router.push(`/authenticate/access-verification?pin=${response?.pin}`);
+        }
       }
     } catch (error) {
       console.log(error);
@@ -60,6 +58,11 @@ export function SignInCard() {
 
   return (
     <Card className="w-full max-w-sm border rounded-lg shadow-sm">
+      {isLoading && (
+        <span>
+          <Loader2 size={20} className="animate-spin" /> &nbsp; Loading...
+        </span>
+      )}
       <CardHeader className="pb-2">
         <h2 className="text-xl font-medium">Welcome</h2>
       </CardHeader>

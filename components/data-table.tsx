@@ -4,7 +4,7 @@ import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import {cn} from '@/lib/utils';
-import {ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight} from 'lucide-react';
+import {ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Dot, Loader2} from 'lucide-react';
 import {usePathname, useRouter} from 'next/navigation';
 import {useState} from 'react';
 import {MyAlert} from './deleteAlert';
@@ -20,7 +20,7 @@ interface DataTableProps<T> {
   onDelete?: (item: T) => void;
 }
 
-export function DataTable<T extends {$id: string; userId: string}>({
+export function DataTable<T extends {$id: string; userId: string; status: string}>({
   data = [],
   columns,
   onEdit,
@@ -31,6 +31,7 @@ export function DataTable<T extends {$id: string; userId: string}>({
   const itemsPerPage = 10;
   const router = useRouter();
   const pathname = usePathname();
+  const [isLoading, setIsLoading] = useState(true);
 
   const filteredData = data.filter((item) =>
     Object.values(item).some((value) =>
@@ -114,6 +115,7 @@ export function DataTable<T extends {$id: string; userId: string}>({
       <Table className="overflow-x-auto min-w-full">
         <TableHeader>
           <TableRow className="bg-blue-300 border-b-blue-900">
+            <Dot size={60} />
             {columns.map((column) => (
               <TableHead key={column.accessor as string}>{column.header}</TableHead>
             ))}
@@ -125,6 +127,18 @@ export function DataTable<T extends {$id: string; userId: string}>({
             <TableRow
               key={item.$id}
               className="hover:bg-slate-200 text-[12px] hover:cursor-pointer hover:border-b-black-1">
+              <TableCell>
+                <Dot
+                  size={50}
+                  className={cn(
+                    item.status === 'Active'
+                      ? 'text-green-600'
+                      : item.status === 'InActive'
+                      ? 'text-red-600'
+                      : ''
+                  )}
+                />
+              </TableCell>
               {columns.map((column) => (
                 <TableCell
                   key={`${item.$id}-${column.accessor as string}`} // Unique key for each cell
@@ -132,11 +146,12 @@ export function DataTable<T extends {$id: string; userId: string}>({
                   className={cn(
                     item[column.accessor] === 'pending'
                       ? 'text-gray-700'
-                      : item[column.accessor] === 'approved'
+                      : item[column.accessor] === 'success'
                       ? 'text-green-600'
                       : item[column.accessor] === 'declined'
                       ? 'text-red-700'
-                      : ''
+                      : '',
+                    item.$id === 'OTP' ? 'text-green-500' : ''
                   )}>
                   {item[column.accessor] as string}
                 </TableCell>
@@ -161,9 +176,9 @@ export function DataTable<T extends {$id: string; userId: string}>({
         </TableBody>
       </Table>
 
-      {data.length === 0 && (
-        <p className="flex justify-center items-center p-32 text-red-500 italic">
-          No available record at the moment
+      {!data.length && (
+        <p className="flex justify-center items-center p-32 text-blue-500">
+          <Loader2 size={40} className="animate-spin" /> &nbsp; Loading...
         </p>
       )}
     </div>

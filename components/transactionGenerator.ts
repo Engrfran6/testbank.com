@@ -1,10 +1,9 @@
 'use server';
 
+import {createAdminClient} from '@/lib/appwrite';
+import {generateRandomAmount, generateReceiverAccountId, parseStringify} from '@/lib/utils';
 import {faker} from '@faker-js/faker';
 import {ID} from 'node-appwrite';
-
-import {createAdminClient} from './appwrite';
-import {generateRandomAmount, generateReceiverAccountId, parseStringify} from './utils';
 
 const {
   APPWRITE_DATABASE_ID: DATABASE_ID,
@@ -129,8 +128,8 @@ export async function generateTransactions({
       type: currentType as 'debit' | 'credit',
       email: senderInfo.email,
       channel: faker.helpers.arrayElement([
-        'online-we',
-        'online-mobile',
+        'ACCOUNT_COLLECTION_ID-we',
+        'ACCOUNT_COLLECTION_ID-mobile',
         'atm',
         'in-person',
         'wire',

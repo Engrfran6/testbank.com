@@ -1,7 +1,22 @@
 'use client';
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {TotalBalanceBoxProps} from '@/types';
-import {ChevronDown, ChevronUp} from 'lucide-react';
+import {
+  AccessibilityIcon,
+  BanknoteIcon,
+  ChevronDown,
+  ChevronUp,
+  ContactIcon,
+  DownloadIcon,
+  SettingsIcon,
+} from 'lucide-react';
+import Link from 'next/link';
 import {useState} from 'react';
 import AnimatedCounter from './AnimatedCounter';
 import DoughnutChart from './DoughnutChart';
@@ -47,9 +62,36 @@ const TotalBalanceBox = ({
                 <Button className="bg-[#3589FE] text-white text-sm rounded-md">
                   Transfer money
                 </Button>
-                <Button className="flex gap-2 border border-[#3589FE] text-[#3589FE] text-sm rounded-md">
-                  More <ChevronUp size={15} />
-                </Button>
+                {/* Updated More button with dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="flex gap-2 border border-[#3589FE] text-[#3589FE] text-sm rounded-md">
+                      More <ChevronDown size={15} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-48 text-sm">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <DownloadIcon />
+                      <Link href="/dashboard/client/deposit-funds">Deposit</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <ContactIcon />
+                      <Link href="/dashboard/client/contact-support">Contact Support</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <AccessibilityIcon />
+                      <Link href="/dashboard/client/savings-account">View Savings</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <BanknoteIcon />
+                      <Link href="/dashboard/client/checking-account">Checking Account</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <SettingsIcon />
+                      <Link href="/dashboard/client/account-settings">Account settings</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
