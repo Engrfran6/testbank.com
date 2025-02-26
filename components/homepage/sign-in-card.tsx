@@ -4,6 +4,7 @@ import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardHeader} from '@/components/ui/card';
 import {Checkbox} from '@/components/ui/checkbox';
 import {Label} from '@/components/ui/label';
+import {toast} from '@/hooks/use-toast';
 import {signIn} from '@/lib/actions/user.actions';
 import {authFormSchema} from '@/lib/utils';
 import {zodResolver} from '@hookform/resolvers/zod';
@@ -45,8 +46,14 @@ export function SignInCard() {
           password: data.password,
         });
 
-        if (response?.pin !== '') {
+        if (response?.pin) {
           router.push(`/authenticate/access-verification?pin=${response?.pin}`);
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Login failed!',
+            description: 'Inavalid Email or password, Please try again!.',
+          });
         }
       }
     } catch (error) {
