@@ -122,7 +122,7 @@ export function SignInCard() {
         </Form>
         <div>
           <Link
-            href="/sign-up"
+            href="/auth/client/sign-up"
             className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center">
             Not enrolled? Sign up now. <span className="ml-1">›</span>
           </Link>
