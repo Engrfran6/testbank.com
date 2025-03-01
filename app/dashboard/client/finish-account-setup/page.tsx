@@ -15,7 +15,7 @@ import {useForm} from 'react-hook-form';
 import {useSelector} from 'react-redux';
 import {z} from 'zod';
 
-const page = () => {
+const Page = () => {
   const {toast} = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -88,13 +88,13 @@ const page = () => {
         verification: 'Verified',
       };
 
-      const newUser = await updateUser({userId: userId as string, updates: userData});
+      const verifiedUser = await updateUser({userId: userId as string, updates: userData});
 
-      if (newUser?.verification === 'Verified') {
+      if (verifiedUser?.verification === 'Verified') {
         router.push('/dashboard/client');
       } else {
         return setError(
-          'Error: OOPS! we are unable to verify details at the moment, Please try again later!'
+          'Error: OOPS! we are unable to verify your details at the moment, Please try again later!'
         );
       }
     } catch (error) {
@@ -188,7 +188,7 @@ const page = () => {
               <div className="flex flex-col gap-2">
                 <FormLabel htmlFor="idCard">
                   <span className="text-sm text-gray-800">
-                    Driver's License / Passport ID - (Front)
+                    Driver&apos;s License / Passport ID - (Front)
                   </span>
                   <span className="italic text-[12px] text-purple-400">(Must be valid)</span>
                 </FormLabel>
@@ -203,7 +203,7 @@ const page = () => {
                 <FormLabel htmlFor="idCard">
                   <span className="text-sm text-gray-800">
                     {' '}
-                    Driver's License / Passport ID - (Back)
+                    Driver&apos;s License / Passport ID - (Back)
                   </span>
                   <span className="italic text-[12px] text-purple-400">(Must be valid)</span>
                 </FormLabel>
@@ -251,4 +251,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

@@ -20,7 +20,7 @@ const HeaderBox = ({type = 'title', title, subtext, user, verifyState}: HeaderBo
           {greeting}, <span className="text-bankGradient">{name}</span> |
         </p>
         <div className="align-sub text-[8px] leading-5">
-          {verifyState && user?.verification === 'Verified' ? (
+          {!verifyState && user?.verification === 'Verified' ? (
             <p className="text-green-600 underline flex items-center gap-0.5">
               <VerifiedIcon size={18} /> verified
             </p>

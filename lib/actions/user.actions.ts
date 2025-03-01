@@ -83,18 +83,6 @@ export const signIn = async ({email, password}: signInProps) => {
   }
 };
 
-// export async function labelUpdate() {
-//   const {account} = await createAdminClient();
-
-//   const prefs = account.getPrefs();
-
-//   const result = await account.updatePrefs({label: 'user'});
-
-//   console.log('result from label', result);
-//   console.log('pref from label', prefs);
-
-//   return result;
-
 export async function labelUpdate(userId: string) {
   try {
     // Use the session client instead of the admin client

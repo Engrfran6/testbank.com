@@ -58,12 +58,20 @@ const AuthForm = ({type, role}: {type: string; role: string}) => {
           role: role,
         };
 
-        const $id = await signUp(userData);
+        const response = await signUp(userData);
 
-        if ($id !== '') {
+        console.log('response from sign -up', response);
+
+        if (response?.$id) {
           router.push(
-            `/authenticate/create-access-verification/?$id=${$id}&email=${data.email}&password=${data.password}`
+            `/authenticate/create-access-verification/?$id=${response?.$id}&email=${data.email}&password=${data.password}`
           );
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Registration failed!',
+            description: 'Invalid request or Bad connection, Please try again! .',
+          });
         }
       }
 
@@ -77,11 +85,17 @@ const AuthForm = ({type, role}: {type: string; role: string}) => {
 
         if (response?.pin) {
           router.push(`/authenticate/access-verification/?pin=${response?.pin}`);
+        } else if (response === undefined) {
+          toast({
+            variant: 'destructive',
+            title: 'Login failed!',
+            description: 'Inavalid Email or password, Please try again! .',
+          });
         } else {
           toast({
             variant: 'destructive',
             title: 'Login failed!',
-            description: 'Inavalid Email or password, Please try again!.',
+            description: '404 Error | Network error.',
           });
         }
       }
