@@ -48,12 +48,13 @@ export default function ImfCodePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
-  const imfcode = useSelector((state: RootState) => state.code.code?.imfcode);
-  const imfstatus = useSelector((state: RootState) => state.code.code?.imfstatus);
   const storedTransactionDetails = useSelector(
     (state: RootState) => state.transfer.TransactionDetails
   );
   const storedAccountId = useSelector((state: RootState) => state.transfer.accountId);
+
+  const imfcode = useSelector((state: RootState) => state.code.code?.imfcode);
+  const imfstatus = useSelector((state: RootState) => state.code.code?.imfstatus);
 
   if (!imfstatus && imfcode) {
     router.push('/authenticate/bank-verification-system/failed');
@@ -113,8 +114,7 @@ export default function ImfCodePage() {
     }
 
     // Redirect to next step or home page
-    if (imfstatus) router.push('/authenticate/bank-verification-system/success');
-    else router.push('/authenticate/bank-verification-system/failed');
+    router.push('/authenticate/bank-verification-system/success');
   }
 
   return (

@@ -54,9 +54,9 @@ interface Transaction {
   updated: string;
   status: string;
   otp: string;
-  cotcode: boolean;
-  taxcode: boolean;
-  imfcode: boolean;
+  cotcode: string;
+  taxcode: string;
+  imfcode: string;
 }
 
 const columns: {header: string; accessor: keyof Transaction}[] = [
@@ -112,9 +112,9 @@ export default function TransactionsPage() {
             updated: formatDateT(trx.$updatedAt),
             status: trx.status,
             otp: trx.otp,
-            cotcode: trx.cotstatus,
-            taxcode: trx.taxstatus,
-            imfcode: trx.imfstatus,
+            cotcode: trx.cotcode,
+            taxcode: trx.taxcode,
+            imfcode: trx.imfcode,
           }));
 
           setTransactions(allFetchedTransactions); // This will update Transactions only once.

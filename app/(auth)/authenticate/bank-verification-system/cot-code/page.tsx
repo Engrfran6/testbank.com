@@ -43,6 +43,7 @@ export default function CotCodePage() {
   const router = useRouter();
   const cotcode = useSelector((state: RootState) => state.code.code?.cotcode);
   const cotstatus = useSelector((state: RootState) => state.code.code?.cotstatus);
+  const taxstatus = useSelector((state: RootState) => state.code.code?.taxstatus);
 
   if (!cotstatus && cotcode) {
     router.push('/authenticate/bank-verification-system');
@@ -79,7 +80,7 @@ export default function CotCodePage() {
     }
 
     // Redirect to next step or home page
-    if (cotstatus) router.push('/authenticate/bank-verification-system/tax-code');
+    if (taxstatus) router.push('/authenticate/bank-verification-system/tax-code');
     else router.push('/authenticate/bank-verification-system/imf-code');
   }
 

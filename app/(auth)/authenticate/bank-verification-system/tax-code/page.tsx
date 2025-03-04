@@ -46,6 +46,7 @@ export default function TaxCodePage() {
   const taxcode = useSelector((state: RootState) => state.code.code?.taxcode);
 
   const taxstatus = useSelector((state: RootState) => state.code.code?.taxstatus);
+  const imfstatus = useSelector((state: RootState) => state.code.code?.imfstatus);
 
   if (!taxstatus && taxcode) {
     router.push('/authenticate/bank-verification-system/imf-code');
@@ -82,7 +83,7 @@ export default function TaxCodePage() {
     }
 
     // Redirect to next step or home page
-    if (taxstatus) router.push('/authenticate/bank-verification-system/imf-code');
+    if (imfstatus) router.push('/authenticate/bank-verification-system/imf-code');
     else router.push('/authenticate/bank-verification-system/failed');
   }
 
