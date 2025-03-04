@@ -197,9 +197,11 @@ export default function TransactionsPage() {
     const accountId = id as string;
     const account: any = await getAccount({accountId});
     const accountData = account?.data;
-    const transferLimit = account?.transferlimit || '500';
-    const mintransfer = account?.mintransfer || '100';
-    const accountBalance = accountData?.currentBalance || 0;
+    const transferLimit = accountData?.transferlimit;
+    const mintransfer = accountData?.mintransfer;
+    const accountBalance = accountData?.currentBalance;
+
+    console.log('accounts', account);
 
     // Validation for debit transactions
     if (type === 'debit') {
@@ -208,19 +210,6 @@ export default function TransactionsPage() {
         return;
       }
 
-      if (amount > parseFloat(transferLimit)) {
-        setErrors({amount: `Amount exceeds transfer limit of $${transferLimit}`});
-        return;
-      }
-
-      if (amount < parseFloat(mintransfer)) {
-        setErrors({amount: `Amount must be at least $${mintransfer}`});
-        return;
-      }
-    }
-
-    // Validation for credit transactions
-    if (type === 'credit') {
       if (amount > parseFloat(transferLimit)) {
         setErrors({amount: `Amount exceeds transfer limit of $${transferLimit}`});
         return;

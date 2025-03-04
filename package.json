@@ -36,6 +36,7 @@
     "dwolla-v2": "^3.4.0",
     "embla-carousel-react": "^8.5.1",
     "formidable": "^3.5.2",
+    "framer-motion": "^12.4.10",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.378.0",
     "mitt": "^3.0.1",

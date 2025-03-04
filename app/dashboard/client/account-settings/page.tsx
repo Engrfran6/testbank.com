@@ -8,6 +8,8 @@ import {RootState} from '@/redux/store';
 import {setUser} from '@/redux/userSlice';
 import {User} from '@/types';
 import {Delete, Edit2, Eye, EyeOff} from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 import {useRouter} from 'next/navigation';
 import {useState} from 'react';
 import {useSelector} from 'react-redux';
@@ -54,7 +56,20 @@ const AccountSettingsSection = () => {
     <div className="md:ml-4">
       <Card className="border-0 w-full mt-8 md:p-8">
         <CardContent className="space-y-6 mt-6">
-          <HeaderBox title="Account Settings" subtext="" />
+          <HeaderBox title="Account Settings" subtext="" verifyState />
+
+          {user?.verification !== 'Verified' && (
+            <div className="flex gap-2 items-center text-[10px] md:text-[12px] md:mt-10">
+              <p className="text-red-600">Finsh setting up your account for maximum experience!</p>
+              <Link
+                href="/dashboard/client/finish-account-setup"
+                className="border rounded-md px-1 py-0.5 flex gap-0.5">
+                <span>Finish</span> {''}
+                <span>setup</span>
+              </Link>
+            </div>
+          )}
+
           {/* Personal Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
@@ -62,6 +77,15 @@ const AccountSettingsSection = () => {
                 <CardTitle className="text-lg">Personal Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
+                <div className="">
+                  <Image
+                    src={user.photoId || '/icons/avatar.png'}
+                    width={20}
+                    height={20}
+                    alt="image"
+                    className="h-16 w-16 rounded-full"
+                  />
+                </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Name:</span>
                   <span>

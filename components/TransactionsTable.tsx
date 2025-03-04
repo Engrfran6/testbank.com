@@ -1,6 +1,6 @@
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import {transactionCategoryStyles} from '@/constants';
-import {cn, formatAmount, formatDateTime, getTransactionStatus} from '@/lib/utils';
+import {cn, formatAmount, formatDateTime} from '@/lib/utils';
 import {CategoryBadgeProps, Transaction, TransactionTableProps} from '@/types';
 
 const CategoryBadge = ({category}: CategoryBadgeProps) => {
@@ -31,7 +31,9 @@ const TransactionsTable = ({transactions}: TransactionTableProps) => {
       {transactions?.length > 0 && (
         <TableBody className="w-full">
           {transactions?.map((t: Transaction) => {
-            const status = getTransactionStatus(new Date(t.$createdAt), t.status);
+            const status =
+              t.status !== 'success' && t.status !== 'declined' ? 'Processing' : t.status;
+
             const amount = formatAmount(t.amount);
 
             const isDebit = t.type === 'debit';

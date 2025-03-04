@@ -54,7 +54,7 @@ interface User {
   userId: string;
   pin: string;
   verification: string;
-  photoId?: React.ReactElement;
+  photoId?: string | React.ReactElement;
 }
 
 const columns: {header: string; accessor: keyof User}[] = [
@@ -188,7 +188,7 @@ export default function UsersPage() {
       dateOfBirth: formData.get('dateOfBirth') as string,
       status: formData.get('status') as string,
       verification: formData.get('verification') as string,
-      photoId: uploadPhotoUrl,
+      photoId: uploadPhotoUrl as string,
     };
 
     try {

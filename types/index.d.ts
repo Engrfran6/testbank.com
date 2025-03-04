@@ -40,7 +40,7 @@ declare type User = {
   city: string;
   state: string;
   postalCode: string;
-  photo: string;
+  photoId?: string;
   dateOfBirth: string;
   verification: string;
   ssn: string;

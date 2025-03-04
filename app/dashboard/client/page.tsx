@@ -86,7 +86,7 @@ const Home = () => {
 
   return (
     <ProtectedRoute role="user">
-      <section className="flex flex-col md:flex-row">
+      <section className="flex flex-col md:flex-row pt-5">
         <div className="home-content">
           <div className={`${user?.verification !== 'Verified' ? '-mt-3 md:-mb-8 w-full' : ''}`}>
             {user?.verification !== 'Verified' && (

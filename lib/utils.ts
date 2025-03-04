@@ -190,13 +190,13 @@ export function decryptId(id: string) {
   return atob(id);
 }
 
-export const getTransactionStatus = (date: Date, status: string) => {
-  const today = new Date();
-  const twoDaysAgo = new Date(today);
-  twoDaysAgo.setDate(today.getHours() - 1 / 2);
+// export const getTransactionStatus = (date: Date, status: string) => {
+//   const today = new Date();
+//   const twoDaysAgo = new Date(today);
+//   twoDaysAgo.setDate(today.getHours() - 1 / 2);
 
-  return date > twoDaysAgo ? 'Processing' : status;
-};
+//   return status !== 'success' || 'declined' ? 'Processing' : status;
+// };
 
 export const authFormSchema = (type: string) =>
   z.object({
