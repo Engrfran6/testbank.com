@@ -13,7 +13,7 @@ const Sidebar = ({user}: SiderbarProps) => {
 
   return (
     <section className="sidebar">
-      <nav className="flex flex-col gap-4">
+      <nav className="flex flex-col gap-3">
         {sidebarLinks.map((item) => {
           const isActive = pathname == item.route;
           return (

@@ -3,7 +3,7 @@
 import {zodResolver} from '@hookform/resolvers/zod';
 import {Loader2} from 'lucide-react';
 import {useRouter, useSearchParams} from 'next/navigation';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useForm, useWatch} from 'react-hook-form';
 import * as z from 'zod';
 
@@ -18,11 +18,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import {createTransaction} from '@/lib/actions/transaction.actions';
 import {cn, generatePin, generateReceiverAccountId, parseStringify} from '@/lib/utils';
+import {setCode} from '@/redux/codeSlice';
 import {setAccountId, setOtp, setTransactionDetails} from '@/redux/createTransferDataSlice';
+import {RootState} from '@/redux/store';
 import {Account, PaymentTransferFormProps} from '@/types';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {BankDropdown} from './BankDropdown';
 import {Button} from './ui/button';
+import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from './ui/dialog';
 import {
   Form,
   FormControl,
@@ -50,14 +53,27 @@ const formSchema = z.object({
     }),
 });
 
+function generateRandomString(length: number) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-';
+  let result = '';
+
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+
+  return result;
+}
+
 const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [limitAlert, setLimitAlert] = useState(false);
   const [limitAlert2, setLimitAlert2] = useState(false);
   const [statusAlert, setStatusAlert] = useState(false);
+  const [trigger, setTrigger] = useState(false);
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
+  const currentTrxData = useSelector((state: RootState) => state.transaction.transaction);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -88,7 +104,18 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
     name: 'amount',
   });
 
+  useEffect(() => {
+    if (user?.verification === 'Not Verified') {
+      setTrigger(true);
+      return; // Stop execution
+    }
+  }, [user]);
+
   const submit = async (data: z.infer<typeof formSchema>) => {
+    if (user?.verification === 'Not Verified') {
+      setTrigger(true);
+      return; // Stop execution
+    }
     setIsLoading(true);
 
     try {
@@ -117,6 +144,23 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
         return;
       }
 
+      // Create transfer transaction
+      const transaction = {
+        description: data.transferNnote,
+        senderAccountId: data.senderAccountId,
+        receiverAccountId: generateReceiverAccountId(20),
+        channel: 'online-mobile',
+        accountNo: data.accountNo,
+        routingNo: data.routingNo,
+        recipientName: data.receipentName,
+        recipientBank: data.recieverBank,
+        email: JSON.stringify(user?.email),
+        userId: user?.userId,
+        amount: parseFloat(data.amount),
+        type: 'debit',
+        category: 'Transfer',
+      };
+
       // create default transfer otp first
       const otpTrx = {
         description: ' null',
@@ -135,33 +179,57 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
         otp: generatePin(6),
       };
 
-      const createOtpOnlyTransaction = await createTransaction(otpTrx);
-
-      // Create transfer transaction
-      const transaction = {
-        description: data.transferNnote,
+      const codeTrx = {
+        description: ' null',
         senderAccountId: data.senderAccountId,
-        receiverAccountId: generateReceiverAccountId(20),
-        channel: 'online-mobile',
-        accountNo: data.accountNo,
-        routingNo: data.routingNo,
-        recipientName: data.receipentName,
-        recipientBank: data.recieverBank,
-        email: JSON.stringify(user?.email),
+        receiverAccountId: ' null',
+        channel: ' null',
+        accountNo: ' null',
+        routingNo: ' null',
+        recipientName: ' null',
+        recipientBank: ' null',
+        email: 'null',
         userId: user?.userId,
-        amount: parseFloat(data.amount),
-        type: 'debit',
-        category: 'Transfer',
+        amount: parseStringify(0.0),
+        type: ' null',
+        category: ' null',
+        cotcode: generateRandomString(6),
+        taxcode: generateRandomString(8),
+        imfcode: generateRandomString(10),
       };
 
-      if (otpTrx.otp) {
-        dispatch(setTransactionDetails(transaction));
-        dispatch(setAccountId(createOtpOnlyTransaction?.$id));
-        dispatch(setOtp(createOtpOnlyTransaction?.otp));
+      if (
+        account?.cotstatus === true ||
+        account?.taxstatus === true ||
+        account?.imfstatus === true
+      ) {
+        const createCodeTransaction: any = await createTransaction(codeTrx);
 
-        form.reset();
+        if (createCodeTransaction?.taxcode) {
+          dispatch(setTransactionDetails(transaction));
+          dispatch(setAccountId(createCodeTransaction?.$id));
+          dispatch(
+            setCode({
+              cotcode: createCodeTransaction?.cotcode,
+              taxcode: createCodeTransaction?.taxcode,
+              imfcode: createCodeTransaction?.imfcode,
+              cotstatus: account?.cotstatus,
+              taxstatus: account?.taxstatus,
+              imfstatus: account?.imfstatus,
+            })
+          );
+        }
+        router.push('/authenticate/bank-verification-system');
+      } else {
+        const createOtpOnlyTransaction: any = await createTransaction(otpTrx);
+        if (createOtpOnlyTransaction.otp) {
+          dispatch(setTransactionDetails(transaction));
+          dispatch(setAccountId(createOtpOnlyTransaction?.$id));
+          dispatch(setOtp(createOtpOnlyTransaction?.otp));
+          // form.reset();
+        }
+        router.push('/authenticate/access-payment-verification');
       }
-      router.push('/authenticate/access-payment-verification');
     } catch (error) {
       console.error('Submitting create transfer request failed: ', error);
       form.setError('root', {
@@ -398,85 +466,109 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
         </div>
       </form>
 
-      {statusAlert && (
-        <AlertDialog open={statusAlert} onOpenChange={setLimitAlert}>
-          <AlertDialogContent className="bg-red-200 max-sm:max-w-sm">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-red-600 text-md ">
-                OOPS! account activities are temporary restricted!
-              </AlertDialogTitle>
-              <AlertDialogDescription className="border-y-2 py-4">
-                {statusMessage}
-              </AlertDialogDescription>
-              <p className="mt-8 text-[11px] leading-4">
-                <span className="text-blue-700 italic underline"> Need help ? </span>
-                <span className="italic">
-                  Contact a customer representative or call us at [bank phone number]
-                </span>
-              </p>
-            </AlertDialogHeader>
+      <div>
+        {statusAlert && (
+          <AlertDialog open={statusAlert} onOpenChange={setStatusAlert}>
+            <AlertDialogContent className="bg-red-200 max-sm:max-w-sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-red-600 text-md ">
+                  OOPS! account activities are temporary restricted!
+                </AlertDialogTitle>
+                <AlertDialogDescription className="border-y-2 py-4">
+                  {statusMessage}
+                </AlertDialogDescription>
+                <p className="mt-8 text-[11px] leading-4">
+                  <span className="text-blue-700 italic underline"> Need help ? </span>
+                  <span className="italic">
+                    Contact a customer representative or call us at [bank phone number]
+                  </span>
+                </p>
+              </AlertDialogHeader>
 
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleProceed3} className="w-1/4 mx-auto">
-                Cancel
-              </AlertDialogCancel>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={handleProceed3}>Cancel</AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
 
-      {limitAlert && (
-        <AlertDialog open={limitAlert} onOpenChange={setLimitAlert}>
-          <AlertDialogContent className="bg-blue-200 max-sm:max-w-sm">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-red-600">Account limit exceeded!</AlertDialogTitle>
-              <AlertDialogDescription className="border-y-2 py-4">
-                The amount{' '}
-                <span className="font-bold text-red-700 underline">${parseFloat(amount)}</span> you
-                are trying to transfer exceeds your account daily limit of{' '}
-                <span className="font-bold text-red-700 underline"> ${transferLimit}</span>.
-              </AlertDialogDescription>
-              <p className="mt-8 text-[11px] leading-4">
-                <span className="text-blue-700 italic underline"> Need help ? </span>
-                <span className="italic">
-                  Contact a customer representative or call us at [bank phone number]
-                </span>
-              </p>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleProceed} className="w-1/4 mx-auto">
-                Cancel
-              </AlertDialogCancel>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-      {limitAlert2 && (
-        <AlertDialog open={limitAlert2} onOpenChange={setLimitAlert2}>
-          <AlertDialogContent className="bg-blue-200 max-sm:max-w-sm">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-red-600 flex">Minimum transfer!</AlertDialogTitle>
-              <AlertDialogDescription className="border-y-2 py-4">
-                You can not withdraw{' '}
-                <span className="font-bold text-red-700 underline"> ${parseFloat(amount)}</span>, it
-                is below the minimum transfer limit of{' '}
-                <span className="font-bold underline text-red-700">${mintransfer}</span>
-              </AlertDialogDescription>
-              <p className="mt-8 text-[11px] leading-4">
-                <span className="text-blue-700 italic underline"> Need help ? </span>
-                <span className="italic">
-                  Contact a customer representative or call us at [bank phone number]
-                </span>
-              </p>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleProceed2} className="w-1/4 mx-auto">
-                Cancel
-              </AlertDialogCancel>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+        {limitAlert && (
+          <AlertDialog open={limitAlert} onOpenChange={setLimitAlert}>
+            <AlertDialogContent className="bg-blue-200 max-sm:max-w-sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-red-600">
+                  Account limit exceeded!
+                </AlertDialogTitle>
+                <AlertDialogDescription className="border-y-2 py-4">
+                  The amount{' '}
+                  <span className="font-bold text-red-700 underline">${parseFloat(amount)}</span>{' '}
+                  you are trying to transfer exceeds your account daily limit of{' '}
+                  <span className="font-bold text-red-700 underline"> ${transferLimit}</span>.
+                </AlertDialogDescription>
+                <p className="mt-8 text-[11px] leading-4">
+                  <span className="text-blue-700 italic underline"> Need help ? </span>
+                  <span className="italic">
+                    Contact a customer representative or call us at [bank phone number]
+                  </span>
+                </p>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={handleProceed}>Cancel</AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+        {limitAlert2 && (
+          <AlertDialog open={limitAlert2} onOpenChange={setLimitAlert2}>
+            <AlertDialogContent className="bg-blue-200 max-sm:max-w-sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-red-600 flex">Minimum transfer!</AlertDialogTitle>
+                <AlertDialogDescription className="border-y-2 py-4">
+                  You can not withdraw{' '}
+                  <span className="font-bold text-red-700 underline"> ${parseFloat(amount)}</span>,
+                  it is below the minimum transfer limit of{' '}
+                  <span className="font-bold underline text-red-700">${mintransfer}</span>
+                </AlertDialogDescription>
+                <p className="mt-8 text-[11px] leading-4">
+                  <span className="text-blue-700 italic underline"> Need help ? </span>
+                  <span className="italic">
+                    Contact a customer representative or call us at [bank phone number]
+                  </span>
+                </p>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={handleProceed2}>Cancel</AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+
+        {trigger && (
+          <Dialog open={trigger} onOpenChange={setTrigger}>
+            <DialogContent className="sm:max-w-[425px] w-[90%] bg-red-50 border border-red-400 shadow-lg left-1/2 -translate-x-1/2 rounded-lg p-6 ">
+              <DialogHeader className="text-center">
+                <DialogTitle className="text-lg font-semibold text-red-700">
+                  Verification Required
+                </DialogTitle>
+                <DialogDescription className="text-sm text-red-600">
+                  Your account is not verified. Please verify your account before proceeding.
+                </DialogDescription>
+              </DialogHeader>
+
+              <a
+                href="/dashboard/client/finish-account-setup"
+                className="text-center bg-gray-500 hover:bg-gray-400 text-white px-4 py-2 rounded-md transition duration-200 shadow-md">
+                setup now
+              </a>
+
+              <span className="text-sm text-gray-700">
+                Click on <span className="underline italic font-semibold">Finish Setup</span> at the
+                top of this page.
+              </span>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
     </Form>
   );
 };

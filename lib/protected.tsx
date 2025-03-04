@@ -3,10 +3,10 @@
 import {Loader2} from 'lucide-react';
 import {useRouter} from 'next/navigation';
 import {useEffect, useState} from 'react';
-import {routeByRole} from './actions/user.actions';
+import {routeByRole, routeByRoleAdmin} from './actions/user.actions';
 
 interface ProtectedProps {
-  role: string;
+  role: 'user' | 'admin';
   children: React.ReactNode;
 }
 
@@ -17,17 +17,34 @@ const ProtectedRoute = ({role, children}: ProtectedProps) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const user = await routeByRole();
+        let user;
 
-        if (!user) {
-          router.push('/auth/client/sign-in');
-        } else if (role === 'admin' && !user.labels.includes('admin')) {
-          router.push('/dashboard/client');
-        } else if (role === 'user' && !user.labels.includes('user')) {
-          router.push('/dashboard/admin');
+        if (role === 'admin') {
+          user = await routeByRoleAdmin(); // Fetch only admin users
+          if (!user) {
+            router.replace('/auth/admin/sign-in');
+            return;
+          }
+        } else {
+          user = await routeByRole(); // Fetch only regular users
+          if (!user) {
+            router.replace('/auth/client/sign-in');
+            return;
+          }
+        }
+
+        // Redirect users if they try to access the wrong role's dashboard
+        if (role === 'admin' && !user?.labels?.includes('admin')) {
+          router.replace('/dashboard/client');
+          return;
+        }
+
+        if (role === 'user' && user?.labels?.includes('admin')) {
+          router.replace('/dashboard/admin');
+          return;
         }
       } catch (error) {
-        router.push('/auth/client/sign-in');
+        router.replace(`/auth/${role === 'user' ? 'client' : 'admin'}/sign-in`);
       } finally {
         setIsLoading(false);
       }

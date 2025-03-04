@@ -2,28 +2,30 @@
 
 import {Layout} from '@/components/layout';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {getAllUsers} from '@/lib/actions/user.actions';
+import {getAllAccounts, getAllTransactions, getAllUsers} from '@/lib/actions/user.actions';
 import ProtectedRoute from '@/lib/protected';
-import {User} from '@/types';
-import {MessageCircle, X} from 'lucide-react';
+import {Account, Transaction, User} from '@/types';
 import Link from 'next/link';
 import {useEffect, useState} from 'react';
-import AdminLiveChat from './AdminLiveChat';
 
 const Page = () => {
   const [users, setUsers] = useState<User | any>([]);
+  const [accounts, setAccounts] = useState<Account | any>([]);
+  const [transactions, setTransactions] = useState<Transaction | any>([]);
 
   useEffect(() => {
-    const getUsers = async () => {
+    const getData = async () => {
       const allUsers = await getAllUsers();
+      const allAccounts = await getAllAccounts();
+      const allTransations = await getAllTransactions();
 
       setUsers(allUsers);
+      setAccounts(allAccounts);
+      setTransactions(allTransations);
     };
 
-    getUsers();
+    getData();
   }, []);
-
-  const [isChatOpen, setIsChatOpen] = useState(false); // Chat visibility state
 
   return (
     <ProtectedRoute role="admin">
@@ -46,7 +48,7 @@ const Page = () => {
                 <CardTitle>Active Accounts</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">569</p>
+                <p className="text-3xl font-bold">{accounts.length}</p>
               </CardContent>
             </Card>
             <Card>
@@ -54,28 +56,24 @@ const Page = () => {
                 <CardTitle>Total Transactions</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">1,678</p>
+                <p className="text-3xl font-bold">{transactions.length}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Restrictions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul>
+                  <li className="text-xl font-semibold">Users restrictions</li>
+                  <li className="text-xl font-semibold">Account restrictions</li>
+                  <li className="text-xl font-semibold">Transaction restrictions</li>
+                </ul>
               </CardContent>
             </Card>
           </div>
         </div>
       </Layout>
-      {/* Chat Toggle Button */}
-      <div className="fixed bottom-5 right-5 flex items-center gap-2">
-        <span className="text-sm italic text-blue-700">Chat with client</span>
-        <button
-          onClick={() => setIsChatOpen(!isChatOpen)}
-          className=" bg-blue-500 text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition-all">
-          {isChatOpen ? <X size={40} /> : <MessageCircle size={40} />}
-        </button>
-      </div>
-
-      {/* Chat Box */}
-      {isChatOpen && (
-        <div className="fixed bottom-16 right-5 w-80 max-w-fit bg-white border border-gray-300 shadow-lg rounded-lg z-10">
-          <AdminLiveChat />
-        </div>
-      )}
     </ProtectedRoute>
   );
 };

@@ -60,7 +60,7 @@ const TotalBalanceBox = ({
               </h3>
               <div className="flex gap-4 flex-wrap">
                 <Button className="bg-[#3589FE] text-white text-sm rounded-md">
-                  Transfer money
+                  <Link href="/dashboard/client/payment-transfer"> Transfer money</Link>
                 </Button>
                 {/* Updated More button with dropdown */}
                 <DropdownMenu>

@@ -54,10 +54,12 @@ interface Transaction {
   updated: string;
   status: string;
   otp: string;
+  cotcode: boolean;
+  taxcode: boolean;
+  imfcode: boolean;
 }
 
 const columns: {header: string; accessor: keyof Transaction}[] = [
-  {accessor: 'email', header: 'Email'},
   {accessor: 'recipientName', header: 'RecipientName'},
   {accessor: 'recipientBank', header: 'RecipientBank'},
   {accessor: 'accountNo', header: 'AccountNo'},
@@ -70,6 +72,9 @@ const columns: {header: string; accessor: keyof Transaction}[] = [
   {accessor: 'updated', header: 'UpdatedAt'},
   {accessor: 'status', header: 'Status'},
   {accessor: 'otp', header: 'OTP'},
+  {accessor: 'cotcode', header: 'COT'},
+  {accessor: 'taxcode', header: 'TAX'},
+  {accessor: 'imfcode', header: 'IMF'},
 ];
 
 export default function TransactionsPage() {
@@ -93,7 +98,6 @@ export default function TransactionsPage() {
             userId: userId,
             description: trx.description,
             type: trx.type,
-            email: trx.email,
             channel: trx.channel,
             category: trx.category,
             accountNo: trx.accountNo,
@@ -108,6 +112,9 @@ export default function TransactionsPage() {
             updated: formatDateT(trx.$updatedAt),
             status: trx.status,
             otp: trx.otp,
+            cotcode: trx.cotstatus,
+            taxcode: trx.taxstatus,
+            imfcode: trx.imfstatus,
           }));
 
           setTransactions(allFetchedTransactions); // This will update Transactions only once.
@@ -231,7 +238,6 @@ export default function TransactionsPage() {
     const transactionData: any = {
       receiverAccountId: generateReceiverAccountId(20),
       senderAccountId: id,
-      email: 'example@gmail.com',
       userId: userId,
       recipientName: formData.get('recipientName'),
       recipientBank: formData.get('recipientBank'),
@@ -348,10 +354,6 @@ export default function TransactionsPage() {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" defaultValue={currentTransaction?.email} required />
-              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="receiverAccountId">Receipient Account</Label>

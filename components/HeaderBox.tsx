@@ -15,8 +15,8 @@ const HeaderBox = ({type = 'title', title, subtext, user, verifyState}: HeaderBo
     }
 
     return (
-      <div className="flex gap-1">
-        <p className="text-xl">
+      <div className="flex flex-wrap gap-1">
+        <p className="text-2xl md:text-3xl">
           {greeting}, <span className="text-bankGradient">{name}</span> |
         </p>
         <div className="align-sub text-[8px] leading-5">

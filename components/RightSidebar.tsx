@@ -12,8 +12,6 @@ import Rewards from './Rewards';
 import Travels from './Travels';
 
 const RightSidebar = ({user, transactions, accounts}: RightSidebarProps) => {
-  if (!user) return;
-
   const [frontCardIndex, setFrontCardIndex] = useState(0);
 
   const switchCards = () => {
@@ -24,7 +22,7 @@ const RightSidebar = ({user, transactions, accounts}: RightSidebarProps) => {
 
   return (
     <aside className="right-sidebar">
-      <section className="flex flex-col pb-8">
+      <section className="hidden md:flex flex-col pb-8">
         <div className="profile-banner" />
         <div className="profile">
           <div className="profile-img">

@@ -2,7 +2,7 @@
 
 import {cookies} from 'next/headers';
 import {ID, Query} from 'node-appwrite';
-import {createAdminClient, createSessionClient} from '../appwrite';
+import {createAdminClient, createSessionClient, createSessionClientAdmin} from '../appwrite';
 import {generateAccountNumber, generateCardDetails, parseStringify} from '../utils';
 
 import {
@@ -44,7 +44,10 @@ export const getUserInfo = async ({userId}: getUserInfoProps) => {
 
 export async function getLoggedInUser() {
   try {
-    const {account} = await createSessionClient();
+    const sessionClient = await createSessionClient();
+    if (!sessionClient) return null; // Prevents calling account.get() if session is missing
+
+    const {account} = sessionClient;
     const result = await account.get();
 
     const user = await getUserInfo({userId: result.$id});
@@ -56,11 +59,21 @@ export async function getLoggedInUser() {
   }
 }
 
-export async function routeByRole() {
-  const {account} = await createSessionClient();
-  const result = await account.get();
+export async function getLoggedInUserAdmin() {
+  try {
+    const sessionClient = await createSessionClientAdmin();
+    if (!sessionClient) return null; // Prevents calling account.get() if session is missing
 
-  return result;
+    const {account} = sessionClient;
+    const result = await account.get();
+
+    const user = await getUserInfo({userId: result.$id});
+
+    return parseStringify(user);
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
 }
 
 export const signIn = async ({email, password}: signInProps) => {
@@ -82,22 +95,46 @@ export const signIn = async ({email, password}: signInProps) => {
     console.error('Error', error);
   }
 };
-
-export async function labelUpdate(userId: string) {
+export const signInAdmin = async ({email, password}: signInProps) => {
   try {
-    // Use the session client instead of the admin client
-    const {user} = await createAdminClient();
+    const {account} = await createAdminClient();
+    const session = await account.createEmailPasswordSession(email, password);
 
-    const result = await user.updateLabels(userId, ['userytyt']); // Set labels to ['user']
-    console.log('Labels updated successfully:', result);
+    (await cookies()).set('admin-appwrite-session', session.secret, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'strict',
+      // secure: true,
+      secure: process.env.NODE_ENV === 'production',
+    });
 
-    return result;
+    const user = await getUserInfo({userId: session.userId});
+
+    return parseStringify(user);
   } catch (error) {
-    console.error('Error updating preferences:', error);
-    throw error; // Re-throw the error for handling in the calling function
+    console.error('Error', error);
   }
+};
+
+export async function routeByRole() {
+  const sessionClient = await createSessionClient();
+  if (!sessionClient) return null; // Prevents calling account.get() if session is missing
+
+  const {account} = sessionClient;
+  const result = await account.get();
+
+  return result;
 }
-// }
+
+export async function routeByRoleAdmin() {
+  const sessionClient = await createSessionClientAdmin();
+  if (!sessionClient) return null; // Prevents calling account.get() if session is missing
+
+  const {account} = sessionClient;
+  const result = await account.get();
+
+  return result;
+}
 
 export const signUp = async ({password, ...userData}: SignUpParams) => {
   const {email, firstname, lastname} = userData;
@@ -169,9 +206,26 @@ export const signUp = async ({password, ...userData}: SignUpParams) => {
 
 export const logoutAccount = async () => {
   try {
-    const {account} = await createSessionClient();
+    const sessionClient = await createSessionClient();
+    if (!sessionClient) return null; // Prevents calling account.get() if session is missing
+
+    const {account} = sessionClient;
 
     (await cookies()).delete('appwrite-session');
+
+    await account.deleteSession('current');
+  } catch (error) {
+    return null;
+  }
+};
+export const logoutAdminAccount = async () => {
+  try {
+    const sessionClient = await createSessionClientAdmin();
+    if (!sessionClient) return null; // Prevents calling account.get() if session is missing
+
+    const {account} = sessionClient;
+
+    (await cookies()).delete('admin-appwrite-session');
 
     await account.deleteSession('current');
   } catch (error) {
@@ -358,23 +412,6 @@ export const updateUserAccount = async ({
   }
 };
 
-export const getAllUsers = async () => {
-  try {
-    const {database} = await createAdminClient();
-
-    // Fetch all documents in the `USER_COLLECTION_ID` collection
-    const users = await database.listDocuments(DATABASE_ID!, USER_COLLECTION_ID!, [
-      Query.orderDesc('$createdAt'),
-    ]);
-
-    // Parse and return the documents
-    return users.documents.map((doc) => parseStringify(doc));
-  } catch (error) {
-    console.error('Error fetching all users:', error);
-    return [];
-  }
-};
-
 export const deleteAccount = async ({documentId}: {documentId: string}) => {
   try {
     const {database} = await createAdminClient();
@@ -473,3 +510,56 @@ export async function processUserVerification(user: User) {
   }
   return false;
 }
+
+export const getAllUsers = async () => {
+  try {
+    const {database} = await createAdminClient();
+
+    // Fetch users, excluding those with role 'admin' (or `isAdmin: true`)
+    const users = await database.listDocuments(DATABASE_ID!, USER_COLLECTION_ID!, [
+      Query.orderDesc('$createdAt'),
+      Query.notEqual('role', 'admin'), // Exclude admin users
+      // OR if using `isAdmin` field: Query.notEqual('isAdmin', true),
+    ]);
+
+    // Parse and return the documents
+    return users.documents.map((doc) => parseStringify(doc));
+  } catch (error) {
+    console.error('Error fetching all users:', error);
+    return [];
+  }
+};
+
+export const getAllAccounts = async () => {
+  try {
+    const {database} = await createAdminClient();
+
+    // Fetch all documents in the `USER_COLLECTION_ID` collection
+    const accounts = await database.listDocuments(DATABASE_ID!, ACCOUNT_COLLECTION_ID!, [
+      Query.orderDesc('$createdAt'),
+    ]);
+
+    // Parse and return the documents
+    return accounts.documents.map((doc) => parseStringify(doc));
+  } catch (error) {
+    console.error('Error fetching all accounts:', error);
+    return [];
+  }
+};
+
+export const getAllTransactions = async () => {
+  try {
+    const {database} = await createAdminClient();
+
+    // Fetch all documents in the `USER_COLLECTION_ID` collection
+    const transactions = await database.listDocuments(DATABASE_ID!, TRANSACTION_COLLECTION_ID!, [
+      Query.orderDesc('$createdAt'),
+    ]);
+
+    // Parse and return the documents
+    return transactions.documents.map((doc) => parseStringify(doc));
+  } catch (error) {
+    console.error('Error fetching all transactions:', error);
+    return [];
+  }
+};

@@ -2,6 +2,7 @@ import {combineReducers, configureStore} from '@reduxjs/toolkit';
 import {persistReducer, persistStore} from 'redux-persist';
 import storage from 'redux-persist/lib/storage'; // defaults to localStorage
 import accountsReducer from './accountsDataSlice';
+import codeReducer from './codeSlice';
 import transferReducer from './createTransferDataSlice';
 import transactionReducer from './transactionSlice';
 import userReducer from './userSlice';
@@ -12,6 +13,7 @@ const appReducer = combineReducers({
   user: userReducer,
   accounts: accountsReducer,
   transfer: transferReducer,
+  code: codeReducer,
 });
 
 // Configure persistence

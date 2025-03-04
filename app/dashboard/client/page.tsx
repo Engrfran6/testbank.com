@@ -13,6 +13,7 @@ import {setAccountsData} from '@/redux/accountsDataSlice';
 import {RootState} from '@/redux/store';
 import {clearTransaction, setTransaction} from '@/redux/transactionSlice';
 import {setUser} from '@/redux/userSlice';
+import Link from 'next/link';
 
 import {useSearchParams} from 'next/navigation';
 import {useEffect, useState} from 'react';
@@ -42,7 +43,7 @@ const Home = () => {
       dispatch(setUser(user));
     };
     getUser();
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (user) {
@@ -53,7 +54,7 @@ const Home = () => {
 
       fetchAccounts();
     }
-  }, [user?.userId]);
+  }, [user, dispatch]);
 
   const accountsData = accounts?.data || []; // Ensure it's always an array
   // Get the account ID from the URL or default to the first account
@@ -81,21 +82,24 @@ const Home = () => {
     };
 
     fetchAccount();
-  }, [accountId]);
+  }, [accountId, dispatch]);
 
   return (
     <ProtectedRoute role="user">
-      <section className="flex">
+      <section className="flex flex-col md:flex-row">
         <div className="home-content">
-          <div>
+          <div className={`${user?.verification !== 'Verified' ? '-mt-3 md:-mb-8 w-full' : ''}`}>
             {user?.verification !== 'Verified' && (
-              <div className="flex gap-2 items-center text-[11px]">
-                <p className="text-red-600">Please verify account for maximum experience!</p>
-                <a
+              <div className="flex gap-2 items-center text-[10px] md:text-[12px] md:mt-10">
+                <p className="text-red-600">
+                  Finsh setting up your account for maximum experience!
+                </p>
+                <Link
                   href="/dashboard/client/finish-account-setup"
-                  className="border rounded-md px-1.5 py-0.5">
-                  Finish setup
-                </a>
+                  className="border rounded-md px-1 py-0.5 flex gap-0.5">
+                  <span>Finish</span> {''}
+                  <span>setup</span>
+                </Link>
               </div>
             )}
           </div>

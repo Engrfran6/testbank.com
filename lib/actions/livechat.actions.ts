@@ -1,5 +1,6 @@
 'use server';
 
+import {Query} from 'appwrite';
 import {ID} from 'node-appwrite';
 import {createAdminClient} from '../appwrite';
 import {parseStringify} from '../utils';
@@ -37,7 +38,18 @@ export const fetchMessages = async () => {
   try {
     const {database} = await createAdminClient();
 
-    const response = await database.listDocuments(DATABASE_ID!, LIVECHAT_COLLECTION_ID!);
+    // Get the timestamp for 3 days ago
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    // Convert to ISO format
+    const threeDaysAgoISO = threeDaysAgo.toISOString();
+
+    // Query the database for messages created within the last 3 days
+    const response = await database.listDocuments(DATABASE_ID!, LIVECHAT_COLLECTION_ID!, [
+      Query.greaterThan('$createdAt', threeDaysAgoISO),
+      Query.orderDesc('$createdAt'), // Sort from newest to oldest
+    ]);
 
     const messages = response.documents.map((doc: any) => ({
       message: doc.message,

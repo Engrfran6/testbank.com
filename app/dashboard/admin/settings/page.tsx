@@ -7,7 +7,7 @@ import {Label} from '@/components/ui/label';
 import {Switch} from '@/components/ui/switch';
 import {useState} from 'react';
 
-export default function SettingsPage() {
+export default function SettingsPagnnne() {
   const [settings, setSettings] = useState({
     siteName: 'Admin Dashboard',
     contactEmail: 'admin@example.com',

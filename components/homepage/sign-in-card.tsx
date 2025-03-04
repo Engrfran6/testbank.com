@@ -5,7 +5,7 @@ import {Card, CardContent, CardHeader} from '@/components/ui/card';
 import {Checkbox} from '@/components/ui/checkbox';
 import {Label} from '@/components/ui/label';
 import {toast} from '@/hooks/use-toast';
-import {signIn} from '@/lib/actions/user.actions';
+import {routeByRole, routeByRoleAdmin, signIn} from '@/lib/actions/user.actions';
 import {authFormSchema} from '@/lib/utils';
 import {zodResolver} from '@hookform/resolvers/zod';
 import {Loader2} from 'lucide-react';
@@ -16,15 +16,28 @@ import {useForm} from 'react-hook-form';
 import {useDispatch} from 'react-redux';
 import {z} from 'zod';
 import CustomInput from '../CustomInput';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
 import {Form} from '../ui/form';
 
 export function SignInCard() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const [statusTrigger, setStatusTrigger] = useState(false);
+  const [deactivationType, setDeactivationType] = useState<'Suspended' | 'De-Activated'>(
+    'Suspended'
+  );
   const dispatch = useDispatch();
 
   const type = 'sign-in';
+  const role = 'user';
 
   const formSchema = authFormSchema(type);
   // 1. Define your form.
@@ -41,21 +54,52 @@ export function SignInCard() {
     setIsLoading(true);
     try {
       if (type === 'sign-in') {
-        const response = await signIn({
-          email: data.email,
-          password: data.password,
-        });
+        const response = await signIn({email: data.email, password: data.password});
 
-        if (response?.pin) {
-          router.push(`/authenticate/access-verification?pin=${response?.pin}`);
-        } else {
+        if (!response) {
           toast({
             variant: 'destructive',
             title: 'Login failed!',
-            description: 'Inavalid Email or password, Please try again!.',
+            description: 'Invalid Email or password. Please try again!',
           });
+          return;
         }
+
+        if (role === 'user') {
+          if (response?.status === 'Suspended' || response?.status === 'De-Activated') {
+            setDeactivationType(response.status);
+            setStatusTrigger(true);
+            return;
+          } else {
+            const user = await routeByRole();
+            if (user?.labels.includes('user')) {
+              if (response.pin) {
+                router.push(
+                  `/authenticate/access-verification/?auth_page=${role}&pin=${response.pin}`
+                );
+                return;
+              }
+            }
+          }
+        } else if (role === 'user') {
+          const adminUser = await routeByRoleAdmin();
+          if (adminUser?.labels.includes('admin')) {
+            return;
+          }
+        }
+
+        toast({
+          variant: 'destructive',
+          title: 'Access denied!',
+          description: 'You are not authorized to log in through this route!',
+        });
       }
+
+      toast({
+        variant: 'destructive',
+        title: 'Login failed!',
+        description: 'Invalid credentials or network issue. Please try again!',
+      });
     } catch (error) {
       console.log(error);
     } finally {
@@ -128,6 +172,48 @@ export function SignInCard() {
           </Link>
         </div>
       </CardContent>
+      <Dialog open={statusTrigger} onOpenChange={setStatusTrigger}>
+        <DialogContent className="sm:max-w-[425px] w-[90%] bg-red-100 border border-red-500 shadow-lg fixed top-[22%] left-1/2 -translate-x-1/2 rounded-lg">
+          <DialogHeader>
+            <DialogTitle className="text-red-900 font-semibold">
+              {deactivationType === 'Suspended'
+                ? '⚠️ Account Temporarily Disabled'
+                : '⛔ Account Permanently Deactivated'}
+            </DialogTitle>
+            <DialogDescription className="text-red-800">
+              {deactivationType === 'Suspended'
+                ? 'Your account has been temporarily disabled. Please contact support if you need assistance.'
+                : 'Your account has been permanently deactivated. You can no longer log in or access your data.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-2 text-sm text-red-900 bg-red-200 p-3 rounded-md">
+            <p>If you believe this was an error, contact support for assistance.</p>
+            <p>
+              📧 Email:{' '}
+              <a
+                href="mailto:support@example.com"
+                className="text-red-900 font-medium hover:underline">
+                support@example.com
+              </a>
+            </p>
+            <p>
+              📞 Phone:{' '}
+              <a href="tel:+1234567890" className="text-red-900 font-medium hover:underline">
+                +1 (234) 567-890
+              </a>
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              className="bg-red-700 text-white hover:bg-red-800"
+              onClick={() => setStatusTrigger(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

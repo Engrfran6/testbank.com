@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 
+import TawkChat from '@/components/ui/Tawk';
 import {Toaster} from '@/components/ui/toaster';
 import type {Metadata} from 'next';
 import {IBM_Plex_Serif, Inter} from 'next/font/google';
@@ -32,6 +33,7 @@ export default function RootLayout({
         <ReduxProvider>
           <Toaster />
           {children}
+          <TawkChat />
         </ReduxProvider>
       </body>
     </html>

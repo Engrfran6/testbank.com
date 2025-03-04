@@ -13,7 +13,28 @@ export async function createSessionClient() {
   const session = (await cookies()).get('appwrite-session');
 
   if (!session || !session.value) {
-    throw new Error('No session');
+    return null;
+  }
+
+  client.setSession(session.value);
+
+  return {
+    get account() {
+      return new Account(client);
+    },
+  };
+}
+export async function createSessionClientAdmin() {
+  const client = new Client();
+
+  client
+    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
+    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT!);
+
+  const session = (await cookies()).get('admin-appwrite-session');
+
+  if (!session || !session.value) {
+    return null;
   }
 
   client.setSession(session.value);

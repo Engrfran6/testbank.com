@@ -404,9 +404,6 @@ export default function UsersPage() {
                       <SelectItem value="Active" className="cursor-pointer">
                         Active
                       </SelectItem>
-                      <SelectItem value="InActive" className="cursor-pointer">
-                        Inactive
-                      </SelectItem>
                       <SelectItem value="Suspended" className="cursor-pointer">
                         Suspended
                       </SelectItem>
@@ -417,16 +414,16 @@ export default function UsersPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="status">verification</Label>
-                  <Select name="status" defaultValue={currentUser?.verification}>
+                  <Label htmlFor="verification">verification</Label>
+                  <Select name="verification" defaultValue={currentUser?.verification}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select verification" />
                     </SelectTrigger>
                     <SelectContent className="opacity-100 bg-slate-50 ">
-                      <SelectItem value="notVerified" className="cursor-pointer">
+                      <SelectItem value="Not Verified" className="cursor-pointer">
                         Not Verified
                       </SelectItem>
-                      <SelectItem value="verified" className="cursor-pointer">
+                      <SelectItem value="Verified" className="cursor-pointer">
                         Verified
                       </SelectItem>
                     </SelectContent>

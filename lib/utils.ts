@@ -236,17 +236,17 @@ export function getDaysLeft(endDate: Date): string {
 //   return `${maskedUsername}@${domain}`;
 // }
 
-export function maskEmail(email?: string): string {
+export function maskEmail(email: string): string {
   // Check if email is undefined or not a string
   if (!email || typeof email !== 'string') {
-    throw new Error('Invalid email address');
+    return '';
   }
 
   const [username, domain] = email.split('@');
 
   // Check if the split resulted in valid parts
   if (!username || !domain) {
-    throw new Error('Invalid email format');
+    return '';
   }
 
   if (username.length <= 2) {

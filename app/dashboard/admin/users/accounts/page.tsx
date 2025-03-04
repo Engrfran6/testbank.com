@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {Switch} from '@/components/ui/switch';
 import {Textarea} from '@/components/ui/textarea';
 import {useToast} from '@/hooks/use-toast';
 import {getAccounts} from '@/lib/actions/account.actions';
@@ -41,6 +42,9 @@ declare type Account = {
   otp: string;
   createdAt: string;
   message: string;
+  cotstatus: boolean;
+  taxstatus: boolean;
+  imfstatus: boolean;
   updateAt: string;
   transferlimit: number;
   mintransfer: number;
@@ -50,9 +54,7 @@ const columns: {header: string; accessor: keyof Account}[] = [
   {accessor: 'accountNumber', header: 'Account Number'},
   {accessor: 'routingNumber', header: 'Routing Number'},
   {accessor: 'subType', header: 'Sub Type'},
-  {accessor: 'availableBalance', header: 'Available Balance'},
   {accessor: 'currentBalance', header: 'Current Balance'},
-  {accessor: 'fraudAlert', header: 'Fraud Alert'},
   {accessor: 'status', header: 'Status'},
   {accessor: 'createdAt', header: 'Created'},
   {accessor: 'updateAt', header: 'Updated'},
@@ -68,6 +70,9 @@ export default function AccountsPage() {
   const [currentAccount, setCurrentAccount] = useState<Account | null>(null);
   const {toast} = useToast();
   const [selectedStatus, setSelectedStatus] = useState('active');
+  const [cotstatus, setCotStatus] = useState<boolean>(false);
+  const [taxstatus, setTaxStatus] = useState<boolean>(false);
+  const [imfstatus, setImfStatus] = useState<boolean>(false);
 
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId') || 'No User ID';
@@ -78,8 +83,7 @@ export default function AccountsPage() {
       try {
         if (userId) {
           const allAccounts = await getAccounts({userId: userId as string});
-
-          setAccounts(allAccounts.data); // This will update accounts only once.
+          setAccounts(allAccounts.data);
         } else return;
       } catch (error) {
         console.error('Error fetching accounts:', error);
@@ -87,7 +91,15 @@ export default function AccountsPage() {
     };
 
     fetchAccounts();
-  }, [id, changesMade]); // Only run this effect when `id` changes.
+  }, [id, changesMade]);
+
+  useEffect(() => {
+    if (currentAccount) {
+      setCotStatus(currentAccount.cotstatus);
+      setTaxStatus(currentAccount.taxstatus);
+      setImfStatus(currentAccount.imfstatus);
+    }
+  }, [currentAccount]);
 
   const handleEdit = (account: Account) => {
     setCurrentAccount(account);
@@ -98,12 +110,9 @@ export default function AccountsPage() {
     try {
       const deletedUser = await deleteAccount({documentId: account.$id});
       if (deletedUser.message) {
-        // Update users state
         setAccounts((prevAccounts) => prevAccounts?.filter((a) => a.$id !== account.$id) || []);
-
-        // Display toast notification
         toast({
-          variant: 'success', // Use a variant like "success" if it's not destructive
+          variant: 'success',
           title: 'Account Deleted',
           description: deletedUser.message || 'The account has been successfully deleted.',
         });
@@ -128,13 +137,10 @@ export default function AccountsPage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
-    // Convert min and max to numbers
     const min = parseFloat(formData.get('mintransfer') as string);
     const max = parseFloat(formData.get('transferlimit') as string);
     const currentBalance = parseFloat(formData.get('currentBalance') as string);
-    const availableBalance = parseFloat(formData.get('availableBalance') as string);
 
-    // Validate min and max
     if (isNaN(min) || isNaN(max)) {
       setErrors({amount: 'Min and Max transfer values must be valid numbers'});
       return;
@@ -150,22 +156,18 @@ export default function AccountsPage() {
       return;
     }
 
-    if (isNaN(availableBalance)) {
-      setErrors({availableBalance: 'Available balance must be a valid number'});
-      return;
-    }
-    // Clear errors if validation passes
     setErrors({});
 
     const accountData: any = {
       accountNumber: formData.get('accountNumber') as string,
       currentBalance: parseFloat(formData.get('currentBalance') as string),
-      availableBalance: parseFloat(formData.get('availableBalance') as string),
-      subType: formData.get('subType'),
       transferlimit: formData.get('transferlimit'),
       mintransfer: formData.get('mintransfer'),
       status: formData.get('status'),
       message: formData.get('message'),
+      cotstatus,
+      taxstatus,
+      imfstatus,
     };
 
     if (currentAccount) {
@@ -204,10 +206,6 @@ export default function AccountsPage() {
           description: 'Failed to update account. Please try again.',
         });
       }
-    } else {
-      // Handle creating a new account (if needed)
-      // const newAccount = await createAccount(accountData);
-      // setAccounts([...accounts, newAccount]);
     }
 
     setIsDialogOpen(false);
@@ -223,8 +221,8 @@ export default function AccountsPage() {
           onOpenChange={(open) => {
             setIsDialogOpen(open);
             if (!open) {
-              setErrors({}); // Clear errors when dialog closes
-              setCurrentAccount(null); // Reset current account
+              setErrors({});
+              setCurrentAccount(null);
             }
           }}>
           <DialogTrigger asChild className="mr-4">
@@ -256,71 +254,6 @@ export default function AccountsPage() {
                   required
                 />
               </div>
-              <div>
-                <Label htmlFor="availableBalance">Available Balance</Label>
-                <Input
-                  id="availableBalance"
-                  name="availableBalance"
-                  type="number"
-                  defaultValue={currentAccount?.availableBalance}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="subType">Account Type</Label>
-                <Select name="subType" defaultValue={currentAccount?.subType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select account type" />
-                  </SelectTrigger>
-                  <SelectContent className="opacity-100 bg-slate-50 ">
-                    <SelectItem className="cursor-pointer" value="Checking">
-                      Checking
-                    </SelectItem>
-                    <SelectItem className="cursor-pointer" value="Savings">
-                      Savings
-                    </SelectItem>
-                    <SelectItem className="cursor-pointer" value="Credit">
-                      Credit
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  name="status"
-                  defaultValue={currentAccount?.status}
-                  onValueChange={(e) => setSelectedStatus(e)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent className="opacity-100 bg-slate-50 ">
-                    <SelectItem className="cursor-pointer" value="active">
-                      Active
-                    </SelectItem>
-                    <SelectItem className="cursor-pointer" value="inactive">
-                      Inactive (lock account)
-                    </SelectItem>
-                    <SelectItem className="cursor-pointer" value="frozen">
-                      Frozen
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {(selectedStatus === 'inactive' || selectedStatus === 'frozen') && (
-                <div>
-                  <Label htmlFor="message">Status Message</Label>
-                  <Textarea
-                    id="message"
-                    name="message"
-                    defaultValue={currentAccount?.message}
-                    placeholder="Enter status reason..."
-                    required
-                  />
-                </div>
-              )}
-
               <div className="grid grid-cols-2 gap-2 items-center">
                 <div>
                   <Label htmlFor="mintransfer">Min-Transfer</Label>
@@ -341,7 +274,77 @@ export default function AccountsPage() {
                   />
                 </div>
               </div>
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  name="status"
+                  value={currentAccount?.status}
+                  onValueChange={(value) => setSelectedStatus(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent className="opacity-100 bg-slate-50 ">
+                    <SelectItem className="cursor-pointer" value="active">
+                      Active
+                    </SelectItem>
+                    <SelectItem className="cursor-pointer" value="inactive">
+                      Inactive (lock account)
+                    </SelectItem>
+                    <SelectItem className="cursor-pointer" value="frozen">
+                      Frozen
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {(selectedStatus === 'inactive' || selectedStatus === 'frozen') && (
+                <div>
+                  <Label htmlFor="message">Status Message</Label>
+                  <Textarea
+                    id="message"
+                    name="message"
+                    defaultValue={currentAccount?.message}
+                    placeholder="Enter status reason..."
+                    required
+                  />
+                </div>
+              )}
               {errors.amount && <span className="text-red-500">{errors.amount}</span>}
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="cot">COT CODE</Label>
+                  <Switch
+                    id="cot"
+                    name="cot"
+                    checked={cotstatus}
+                    onCheckedChange={() => setCotStatus(!cotstatus)}
+                    className="!bg-gray-400 data-[state=checked]:!bg-blue-700"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="tax">TAX CODE</Label>
+                  <Switch
+                    id="tax"
+                    name="tax"
+                    checked={taxstatus}
+                    onCheckedChange={() => setTaxStatus(!taxstatus)}
+                    className="!bg-gray-400 data-[state=checked]:!bg-blue-700"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="imf">IMF CODE</Label>
+                  <Switch
+                    id="imf"
+                    name="imf"
+                    checked={imfstatus}
+                    onCheckedChange={() => setImfStatus(!imfstatus)}
+                    className="!bg-gray-400 data-[state=checked]:!bg-blue-700"
+                  />
+                </div>
+              </div>
+
               <Button type="submit" className="px-4 py-2 border bg-blue-600 text-white">
                 {currentAccount ? ' Update account' : 'Create account'}
               </Button>

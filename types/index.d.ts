@@ -19,7 +19,10 @@ declare type SignUpParams = {
   dateOfBirth?: string;
   ssn?: string;
   email: string;
+  country: string;
+  phone: string;
   password: string;
+  role: string;
 };
 
 declare type LoginUser = {
@@ -79,6 +82,9 @@ declare type Account = {
   createdAt: Date;
   status: string;
   message?: string;
+  cotstatus: boolean;
+  taxstatus: boolean;
+  imfstatus: boolean;
 };
 
 declare type Transaction = {

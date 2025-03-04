@@ -25,7 +25,7 @@ const Navbar = () => {
   };
   return (
     <nav className="hidden md:flex fixed w-full border-b bg-white  shadow-sm z-50">
-      <div className="flex justify-between w-[85vw] h-[6.4rem] mx-auto">
+      <div className="flex justify-between w-[78vw] h-[6.4rem] mx-auto">
         <Link href="/dashboard/client" className="flex cursor-pointer items-center gap-2">
           <Image
             src="/icons/logo.svg"
