@@ -82,9 +82,7 @@ declare type Account = {
   createdAt: Date;
   status: string;
   message?: string;
-  cotstatus: boolean;
-  taxstatus: boolean;
-  imfstatus: boolean;
+  codestatus: boolean;
 };
 
 declare type Transaction = {
@@ -105,6 +103,8 @@ declare type Transaction = {
   email: string;
   amount: number;
   otp: string;
+  codestatus: string;
+  trxstep: string;
   $createdAt: Date;
 };
 
@@ -267,6 +267,7 @@ declare interface CategoryBadgeProps {
 
 declare interface TransactionTableProps {
   transactions: Transaction[];
+  finished?: boolean;
 }
 
 declare interface CategoryProps {
@@ -316,6 +317,8 @@ declare interface CreateTransactionProps {
   email: string;
   amount: number;
   otp?: string;
+  taxcode?: string;
+  imfcode?: string;
 }
 
 declare interface createCardProps {

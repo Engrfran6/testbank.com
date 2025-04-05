@@ -42,9 +42,7 @@ declare type Account = {
   otp: string;
   createdAt: string;
   message: string;
-  cotstatus: boolean;
-  taxstatus: boolean;
-  imfstatus: boolean;
+  codestatus: boolean;
   updateAt: string;
   transferlimit: number;
   mintransfer: number;
@@ -70,9 +68,7 @@ export default function AccountsPage() {
   const [currentAccount, setCurrentAccount] = useState<Account | null>(null);
   const {toast} = useToast();
   const [selectedStatus, setSelectedStatus] = useState('active');
-  const [cotstatus, setCotStatus] = useState<boolean>(false);
-  const [taxstatus, setTaxStatus] = useState<boolean>(false);
-  const [imfstatus, setImfStatus] = useState<boolean>(false);
+  const [codestatus, setCodeStatus] = useState<boolean>(false);
 
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId') || 'No User ID';
@@ -91,13 +87,11 @@ export default function AccountsPage() {
     };
 
     fetchAccounts();
-  }, [id, changesMade]);
+  }, [userId, changesMade]);
 
   useEffect(() => {
     if (currentAccount) {
-      setCotStatus(currentAccount.cotstatus);
-      setTaxStatus(currentAccount.taxstatus);
-      setImfStatus(currentAccount.imfstatus);
+      setCodeStatus(currentAccount.codestatus);
     }
   }, [currentAccount]);
 
@@ -165,9 +159,7 @@ export default function AccountsPage() {
       mintransfer: formData.get('mintransfer'),
       status: formData.get('status'),
       message: formData.get('message'),
-      cotstatus,
-      taxstatus,
-      imfstatus,
+      codestatus,
     };
 
     if (currentAccount) {
@@ -312,34 +304,12 @@ export default function AccountsPage() {
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="cot">COT CODE</Label>
+                  <Label htmlFor="cot">CODE (cot - tax - imf)</Label>
                   <Switch
                     id="cot"
                     name="cot"
-                    checked={cotstatus}
-                    onCheckedChange={() => setCotStatus(!cotstatus)}
-                    className="!bg-gray-400 data-[state=checked]:!bg-blue-700"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="tax">TAX CODE</Label>
-                  <Switch
-                    id="tax"
-                    name="tax"
-                    checked={taxstatus}
-                    onCheckedChange={() => setTaxStatus(!taxstatus)}
-                    className="!bg-gray-400 data-[state=checked]:!bg-blue-700"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="imf">IMF CODE</Label>
-                  <Switch
-                    id="imf"
-                    name="imf"
-                    checked={imfstatus}
-                    onCheckedChange={() => setImfStatus(!imfstatus)}
+                    checked={codestatus}
+                    onCheckedChange={() => setCodeStatus(!codestatus)}
                     className="!bg-gray-400 data-[state=checked]:!bg-blue-700"
                   />
                 </div>

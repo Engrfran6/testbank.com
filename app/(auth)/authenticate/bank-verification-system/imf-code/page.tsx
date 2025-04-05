@@ -2,8 +2,8 @@
 
 import {zodResolver} from '@hookform/resolvers/zod';
 import {Loader2} from 'lucide-react';
-import {useRouter} from 'next/navigation';
-import {useState} from 'react';
+import {useRouter, useSearchParams} from 'next/navigation';
+import {useEffect, useState} from 'react';
 import {useForm} from 'react-hook-form';
 import * as z from 'zod';
 
@@ -27,11 +27,18 @@ import {
 } from '@/components/ui/form';
 import {Input} from '@/components/ui/input';
 import {toast} from '@/hooks/use-toast';
-import {updateTransaction} from '@/lib/actions/transaction.actions';
+import {
+  deletePendingTransaction,
+  getPendingTransactionsById,
+  getTrxByTrxId,
+  updateTransaction,
+} from '@/lib/actions/transaction.actions';
 import {parseStringify} from '@/lib/utils';
+import {clearCode} from '@/redux/codeSlice';
+import {setTransactionDetails} from '@/redux/createTransferDataSlice';
 import {RootState} from '@/redux/store';
 import {addTransaction} from '@/redux/transactionSlice';
-import {Transaction} from '@/types';
+import {Account, Transaction} from '@/types';
 import {useDispatch, useSelector} from 'react-redux';
 
 const formSchema = z.object({
@@ -46,20 +53,17 @@ const formSchema = z.object({
 
 export default function ImfCodePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imfcode, setImfCode] = useState('');
+  const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useDispatch();
-  const storedTransactionDetails = useSelector(
-    (state: RootState) => state.transfer.TransactionDetails
-  );
-  const storedAccountId = useSelector((state: RootState) => state.transfer.accountId);
 
-  const imfcode = useSelector((state: RootState) => state.code.code?.imfcode);
-  const imfstatus = useSelector((state: RootState) => state.code.code?.imfstatus);
+  const accountId = searchParams.get('accountId');
+  const trxId = searchParams.get('trxId');
 
-  if (!imfstatus && imfcode) {
-    router.push('/authenticate/bank-verification-system/failed');
-    return;
-  }
+  const accounts: any = useSelector((state: RootState) => state.accounts?.data?.data);
+
+  const account = accounts!.find((acc: Account) => acc.$id === accountId);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -68,19 +72,40 @@ export default function ImfCodePage() {
     },
   });
 
+  useEffect(() => {
+    const getImfCode = async () => {
+      const trx = await getTrxByTrxId(trxId as string);
+      setImfCode(trx.imfcode);
+    };
+
+    getImfCode();
+  }, [trxId]);
+
+  if (account?.codestatus !== true) return;
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
 
-    // Simulate API call
     if (imfcode === values.imfCode) {
-      toast({
-        title: 'IMF Code Submitted',
-        description: 'Your IMF code has been successfully verified.',
-        variant: 'success',
-      });
+      const data: any = await getPendingTransactionsById(trxId as string)!;
+      const newData = {
+        senderAccountId: data.senderAccountId,
+        receiverAccountId: data.receiverAccountId,
+        channel: data.channel,
+        accountNo: data.accountNo,
+        routingNo: data.routingNo,
+        recipientName: data.receipentName,
+        recipientBank: data.recieverBank,
+        email: data?.email,
+        userId: data?.userId,
+        amount: data.amount,
+        type: data.type,
+        category: data.category,
+      };
+
       const newTransaction: Transaction = await updateTransaction({
-        documentId: storedAccountId!,
-        updates: storedTransactionDetails!,
+        documentId: trxId as string,
+        updates: newData,
       });
 
       if (newTransaction) {
@@ -94,32 +119,32 @@ export default function ImfCodePage() {
         };
 
         dispatch(addTransaction(thisTrx));
+        dispatch(setTransactionDetails(newTransaction));
+        dispatch(clearCode());
+        await deletePendingTransaction({trxId: trxId as string});
 
         toast({
           variant: 'success',
-          title: 'Success!',
-          description: `You have successfully transfered ${thisTrx.amount} to ${storedTransactionDetails?.accountNo} | ${storedTransactionDetails?.recipientName}`,
+          title: 'Successful!',
+          description: `You have successfully transfered ${thisTrx.amount} to ${data?.accountNo} | ${data?.recipientName}`,
         });
       }
-
-      setIsSubmitting(false);
     } else {
       toast({
         title: 'Invalid IMF code',
         description: 'You provided an incorrect IMF code.',
         variant: 'destructive',
       });
-      setIsSubmitting(false);
-      return;
     }
 
-    // Redirect to next step or home page
-    router.push('/authenticate/bank-verification-system/success');
+    setIsSubmitting(false);
+
+    router.push('/authenticate/success');
   }
 
   return (
     <div className="flex flex-col justify-center items-center min-h-[80vh]  sm:max-w-[425px] w-[90%] mx-auto">
-      <span className="bg-black-1 text-white px-2 py-1 ">{imfcode}</span>
+      {/* <span className="bg-black-1 text-white px-2 py-1 ">{imfcode}</span> */}
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">IMF Code Verification</CardTitle>
@@ -161,7 +186,7 @@ export default function ImfCodePage() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-muted-foreground text-center">
-            If you haven't received your IMF code, please contact your account manager.
+            If you haven&apos;t received your IMF code, please contact your account manager.
           </div>
         </CardFooter>
       </Card>

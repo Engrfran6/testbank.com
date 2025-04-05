@@ -19,7 +19,7 @@ const PinVerification = () => {
   // Memoize handleRedirect to prevent unnecessary re-creations
   const handleRedirect = useCallback(() => {
     router.push(`/auth/${role === 'admin' ? 'admin' : 'client'}/sign-in`);
-  }, [router]);
+  }, [router, role]);
 
   const handleVerifyPin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -51,7 +51,7 @@ const PinVerification = () => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="flex flex-col justify-center items-center bg-white p-6 rounded-lg shadow-lg w-80 space-y-6">
-        <span className="px-8 py-2 bg-black-1 text-white">access pin: {pin}</span>
+        <span></span>
         <h2 className="text-sm font-semibold text-center mb-4 text-blue-700">
           Enter your access PIN
         </h2>

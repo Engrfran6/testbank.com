@@ -84,9 +84,13 @@ const Home = () => {
     fetchAccount();
   }, [accountId, dispatch]);
 
+  const filterTransactions = transactions.filter(
+    (transaction: any) => transaction.type === 'credit' || transaction.type === 'debit'
+  );
+
   return (
     <ProtectedRoute role="user">
-      <section className="flex flex-col md:flex-row pt-5">
+      <section className="flex flex-col md:flex-row pt-2 w-full">
         <div className="home-content">
           <div className={`${user?.verification !== 'Verified' ? '-mt-3 md:-mb-8 w-full' : ''}`}>
             {user?.verification !== 'Verified' && (
@@ -127,13 +131,13 @@ const Home = () => {
 
           <RecentTransactions
             accounts={accountsData}
-            transactions={transactions}
+            transactions={filterTransactions}
             accountId={accountId}
             page={currentPage}
           />
         </div>
 
-        <RightSidebar user={user!} transactions={transactions} accounts={accounts} />
+        <RightSidebar user={user!} transactions={filterTransactions} accounts={accounts} />
       </section>
     </ProtectedRoute>
   );

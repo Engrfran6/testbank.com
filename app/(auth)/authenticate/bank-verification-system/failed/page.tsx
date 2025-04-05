@@ -19,7 +19,9 @@ export default function VerificationFailurePage() {
             <XCircle className="w-16 h-16 text-red-500" />
           </div>
           <CardTitle className="text-2xl font-bold text-red-700">Verification Failed</CardTitle>
-          <CardDescription>We couldn't verify one or more of the required codes.</CardDescription>
+          <CardDescription>
+            We couldn&apos;t verify one or more of the required codes.
+          </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
           <p className="text-gray-600 mb-4">

@@ -62,8 +62,12 @@ const FundDepositSection = () => {
   };
 
   return (
-    <div className="p-8 md:max-h-screen xl:py-12 ml-4">
-      <HeaderBox title="Deposit Funds" subtext="Choose your preferred method to deposit funds" />
+    <div className="border-0 w-full mt-4 md:mt-20 px-4">
+      <HeaderBox
+        verifyState
+        title="Deposit Funds"
+        subtext="Choose your preferred method to deposit funds"
+      />
       <Card className="w-full mt-8">
         <CardContent>
           <Tabs defaultValue={selectedMethod} onValueChange={setSelectedMethod}>

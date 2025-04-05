@@ -1,29 +1,52 @@
 'use client';
 
 import {Button} from '@/components/ui/button';
+import {getTrxByTrxId} from '@/lib/actions/transaction.actions';
+import {RootState} from '@/redux/store';
+import {Account} from '@/types';
 import {Loader2, Shield} from 'lucide-react';
-import {useRouter} from 'next/navigation';
-import {useState} from 'react';
+import {useRouter, useSearchParams} from 'next/navigation';
+import {useEffect, useState} from 'react';
+import {useSelector} from 'react-redux';
 
 export default function Home() {
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const accountId = searchParams.get('accountId');
+  const trxId = searchParams.get('trxId');
+
+  const accounts: any = useSelector((state: RootState) => state.accounts?.data?.data);
+
+  const account = accounts!.find((acc: Account) => acc.$id === accountId);
+
+  useEffect(() => {
+    const getStep = async () => {
+      const trx = await getTrxByTrxId(trxId as string);
+      setCurrentStep(parseInt(trx.trxstep));
+    };
+
+    getStep();
+  }, [trxId]);
+
+  if (account?.codestatus !== true) return;
 
   // Define the routes for each step
   const routes = [
-    '/authenticate/bank-verification-system/cot-code',
-    '/authenticate/bank-verification-system/tax-code',
-    '/authenticate/bank-verification-system/imf-code',
+    `/authenticate/bank-verification-system/cot-code?trxId=${trxId}&accountId=${accountId}`,
+    `/authenticate/bank-verification-system/tax-code?trxId=${trxId}&accountId=${accountId}`,
+    `/authenticate/bank-verification-system/imf-code?trxId=${trxId}&accountId=${accountId}`,
   ];
 
   // Function to handle moving to the next step
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (currentStep < routes.length) {
       // Redirect to the next route
       router.push(routes[currentStep]);
       // Update the step
-      setCurrentStep((prevStep) => prevStep + 1);
+      // setCurrentStep((prevStep) => prevStep + 1);
     } else {
       // If all steps are completed, redirect to a final page or home
       router.push('/dashboard/client');
@@ -46,7 +69,7 @@ export default function Home() {
           Banking Verification System
         </h1>
 
-        <div className="flex items-center justify-center mt-[30%]">
+        <div className="flex items-center justify-center mt-[10%]">
           {isLoading ? (
             <div className="flex gap-1 items-center text-xl font-medium text-blue-700">
               <Loader2 className="animate-spin" />

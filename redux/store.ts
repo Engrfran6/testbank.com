@@ -5,6 +5,7 @@ import accountsReducer from './accountsDataSlice';
 import codeReducer from './codeSlice';
 import transferReducer from './createTransferDataSlice';
 import transactionReducer from './transactionSlice';
+import trxIdReducer from './trxIdSlice';
 import userReducer from './userSlice';
 
 // Combine all reducers into a single root reducer
@@ -14,6 +15,7 @@ const appReducer = combineReducers({
   accounts: accountsReducer,
   transfer: transferReducer,
   code: codeReducer,
+  trxId: trxIdReducer,
 });
 
 // Configure persistence

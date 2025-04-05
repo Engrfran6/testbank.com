@@ -16,10 +16,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {createTransaction} from '@/lib/actions/transaction.actions';
+import {createPendingTransaction, createTransaction} from '@/lib/actions/transaction.actions';
 import {cn, generatePin, generateReceiverAccountId, parseStringify} from '@/lib/utils';
-import {setCode} from '@/redux/codeSlice';
-import {setAccountId, setOtp, setTransactionDetails} from '@/redux/createTransferDataSlice';
 import {RootState} from '@/redux/store';
 import {Account, PaymentTransferFormProps} from '@/types';
 import {useDispatch, useSelector} from 'react-redux';
@@ -39,7 +37,7 @@ import {Input} from './ui/input';
 import {Textarea} from './ui/textarea';
 
 const formSchema = z.object({
-  senderAccountId: z.string().min(4, 'Please select a valid account'),
+  senderAccountId: z.string().min(4, 'Please select a valid account').optional(),
   transferNnote: z.string(),
   recieverBank: z.string().min(4, 'Please enter recipient bank name'),
   accountNo: z.string().min(4, 'Please enter recipient account number'),
@@ -53,7 +51,7 @@ const formSchema = z.object({
     }),
 });
 
-function generateRandomString(length: number) {
+export function generateRandomString(length: number) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-';
   let result = '';
 
@@ -84,7 +82,7 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
       routingNo: '',
       receipentName: '',
       amount: '',
-      senderAccountId: '',
+      // senderAccountId: '',
     },
   });
 
@@ -146,8 +144,7 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
 
       // Create transfer transaction
       const transaction = {
-        description: data.transferNnote,
-        senderAccountId: data.senderAccountId,
+        senderAccountId: accountId,
         receiverAccountId: generateReceiverAccountId(20),
         channel: 'online-mobile',
         accountNo: data.accountNo,
@@ -161,74 +158,45 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
         category: 'Transfer',
       };
 
-      // create default transfer otp first
-      const otpTrx = {
-        description: ' null',
-        senderAccountId: data.senderAccountId,
-        receiverAccountId: ' null',
-        channel: ' null',
-        accountNo: ' null',
-        routingNo: ' null',
-        recipientName: ' null',
-        recipientBank: ' null',
+      const transactionType = {
+        description: data.transferNnote,
+        senderAccountId: accountId,
+        receiverAccountId: 'null',
+        channel: 'null',
+        accountNo: 'null',
+        routingNo: 'null',
+        recipientName: 'null',
+        recipientBank: 'null',
         email: 'null',
         userId: user?.userId,
         amount: parseStringify(0.0),
-        type: ' null',
-        category: ' null',
-        otp: generatePin(6),
+        type: 'null',
+        category: 'null',
+        ...(account?.codestatus === true
+          ? {cotcode: generateRandomString(6)}
+          : {otp: generatePin(6)}),
       };
 
-      const codeTrx = {
-        description: ' null',
-        senderAccountId: data.senderAccountId,
-        receiverAccountId: ' null',
-        channel: ' null',
-        accountNo: ' null',
-        routingNo: ' null',
-        recipientName: ' null',
-        recipientBank: ' null',
-        email: 'null',
-        userId: user?.userId,
-        amount: parseStringify(0.0),
-        type: ' null',
-        category: ' null',
-        cotcode: generateRandomString(6),
-        taxcode: generateRandomString(8),
-        imfcode: generateRandomString(10),
-      };
+      if (account?.codestatus === true) {
+        const createCodeTransaction: any = await createTransaction(transactionType);
 
-      if (
-        account?.cotstatus === true ||
-        account?.taxstatus === true ||
-        account?.imfstatus === true
-      ) {
-        const createCodeTransaction: any = await createTransaction(codeTrx);
+        if (createCodeTransaction?.cotcode) {
+          const data = await createPendingTransaction(transaction, createCodeTransaction.$id);
 
-        if (createCodeTransaction?.taxcode) {
-          dispatch(setTransactionDetails(transaction));
-          dispatch(setAccountId(createCodeTransaction?.$id));
-          dispatch(
-            setCode({
-              cotcode: createCodeTransaction?.cotcode,
-              taxcode: createCodeTransaction?.taxcode,
-              imfcode: createCodeTransaction?.imfcode,
-              cotstatus: account?.cotstatus,
-              taxstatus: account?.taxstatus,
-              imfstatus: account?.imfstatus,
-            })
-          );
+          if (data === undefined) return;
         }
-        router.push('/authenticate/bank-verification-system');
+        router.push(
+          `/authenticate/bank-verification-system?trxId=${createCodeTransaction.$id}&accountId=${account.$id}`
+        );
       } else {
-        const createOtpOnlyTransaction: any = await createTransaction(otpTrx);
-        if (createOtpOnlyTransaction.otp) {
-          dispatch(setTransactionDetails(transaction));
-          dispatch(setAccountId(createOtpOnlyTransaction?.$id));
-          dispatch(setOtp(createOtpOnlyTransaction?.otp));
-          // form.reset();
+        const createOtpTransaction: any = await createTransaction(transactionType);
+        if (createOtpTransaction.otp) {
+          const data = await createPendingTransaction(transaction, createOtpTransaction.$id);
+          if (data === undefined) return;
         }
-        router.push('/authenticate/access-payment-verification');
+        router.push(
+          `/authenticate/access-payment-verification?trxId=${createOtpTransaction.$id}&accountId=${account?.$id}`
+        );
       }
     } catch (error) {
       console.error('Submitting create transfer request failed: ', error);
@@ -237,6 +205,7 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
         message: 'An error occurred while processing your request. Please try again.',
       });
     } finally {
+      // form.reset();
       setIsLoading(false);
     }
   };
@@ -494,7 +463,7 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
 
         {limitAlert && (
           <AlertDialog open={limitAlert} onOpenChange={setLimitAlert}>
-            <AlertDialogContent className="bg-blue-200 max-sm:max-w-sm">
+            <AlertDialogContent className="bg-slate-100 border-2 border-red-700 max-sm:max-w-sm">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-red-600">
                   Account limit exceeded!
@@ -520,16 +489,16 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
         )}
         {limitAlert2 && (
           <AlertDialog open={limitAlert2} onOpenChange={setLimitAlert2}>
-            <AlertDialogContent className="bg-blue-200 max-sm:max-w-sm">
+            <AlertDialogContent className="bg-slate-100 border-2 border-red-700 max-sm:max-w-sm">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-red-600 flex">Minimum transfer!</AlertDialogTitle>
-                <AlertDialogDescription className="border-y-2 py-4">
+                <AlertDialogDescription className="border-y-2 py-4 text-sm text-black-1">
                   You can not withdraw{' '}
                   <span className="font-bold text-red-700 underline"> ${parseFloat(amount)}</span>,
                   it is below the minimum transfer limit of{' '}
                   <span className="font-bold underline text-red-700">${mintransfer}</span>
                 </AlertDialogDescription>
-                <p className="mt-8 text-[11px] leading-4">
+                <p className="mt-8 text-[12px] leading-4">
                   <span className="text-blue-700 italic underline"> Need help ? </span>
                   <span className="italic">
                     Contact a customer representative or call us at [bank phone number]

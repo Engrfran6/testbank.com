@@ -27,7 +27,7 @@ const Transfer = () => {
   if (!loggedIn) return;
 
   return (
-    <section className="payment-transfer mx-auto w-full md:w-[60vw] lg:w-[40vw]">
+    <section className="payment-transfer mx-auto w-full md:w-[60vw] lg:w-[50vw] border-0 md:mt-10">
       <HeaderBox
         verifyState
         title="Payment Transfer"

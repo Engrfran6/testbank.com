@@ -1,7 +1,13 @@
+'use client';
+
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import {transactionCategoryStyles} from '@/constants';
 import {cn, formatAmount, formatDateTime} from '@/lib/utils';
+import {setTrxId} from '@/redux/trxIdSlice';
 import {CategoryBadgeProps, Transaction, TransactionTableProps} from '@/types';
+import {useRouter} from 'next/navigation';
+import {useDispatch} from 'react-redux';
+import {Button} from './ui/button';
 
 const CategoryBadge = ({category}: CategoryBadgeProps) => {
   const {borderColor, backgroundColor, textColor, chipBackgroundColor} =
@@ -16,7 +22,24 @@ const CategoryBadge = ({category}: CategoryBadgeProps) => {
   );
 };
 
-const TransactionsTable = ({transactions}: TransactionTableProps) => {
+const TransactionsTable = ({transactions, finished}: TransactionTableProps) => {
+  const router = useRouter();
+  const dispatch = useDispatch();
+
+  const handleFinish = async (transaction: Transaction) => {
+    dispatch(setTrxId(transaction.$id));
+    console.log('transactions=====>', transaction);
+    if (transaction?.otp !== '000000') {
+      router.push(
+        `/authenticate/access-payment-verification?trxId=${transaction.$id}&accountId=${transaction?.senderAccountId}`
+      );
+    } else {
+      router.push(
+        `/authenticate/bank-verification-system?trxId=${transaction.$id}&accountId=${transaction?.senderAccountId}`
+      );
+    }
+  };
+
   return (
     <Table className="w-full">
       <TableHeader>
@@ -32,7 +55,11 @@ const TransactionsTable = ({transactions}: TransactionTableProps) => {
         <TableBody className="w-full">
           {transactions?.map((t: Transaction) => {
             const status =
-              t.status !== 'success' && t.status !== 'declined' ? 'Processing' : t.status;
+              t.status === 'incomplete'
+                ? 'in-complete'
+                : t.status !== 'success' && t.status !== 'declined'
+                ? 'Processing'
+                : t.status;
 
             const amount = formatAmount(t.amount);
 
@@ -66,6 +93,17 @@ const TransactionsTable = ({transactions}: TransactionTableProps) => {
                   }`}>
                   {isDebit ? `-${amount}` : isCredit ? `+${amount}` : amount}
                 </TableCell>
+                {finished && (
+                  <TableCell className="pl-2 pr-10">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="!py-1 !px-2"
+                      onClick={() => handleFinish(t)}>
+                      Finish
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}

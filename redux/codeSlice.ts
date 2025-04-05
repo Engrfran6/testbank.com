@@ -1,12 +1,9 @@
 import {createSlice, PayloadAction} from '@reduxjs/toolkit';
 
 interface codeState {
-  cotcode: string;
-  taxcode: string;
-  imfcode: string;
-  cotstatus: boolean;
-  taxstatus: boolean;
-  imfstatus: boolean;
+  cotcode?: string;
+  taxcode?: string;
+  imfcode?: string;
 }
 
 type codeProps = {
@@ -32,5 +29,5 @@ const codeSlice = createSlice({
 });
 
 // Export the action creator and the reducer
-export const {setCode} = codeSlice.actions; // <-- Ensure this export is correct
+export const {setCode, clearCode} = codeSlice.actions; // <-- Ensure this export is correct
 export default codeSlice.reducer;

@@ -1,5 +1,6 @@
 'use client';
 
+import {motion} from 'framer-motion';
 import {Globe, Search} from 'lucide-react';
 import Link from 'next/link';
 
@@ -18,11 +19,13 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from '@/components/ui/navigation-menu';
+import Image from 'next/image';
+import ProductNav from './product-nav';
 
 const SiteHeader = () => {
   return (
-    <header className="border-b ">
-      <div className="container flex h-14 items-center justify-between">
+    <header className="bg-slate-50">
+      <div className="container flex h-14  items-center justify-between">
         <div className="flex items-center">
           <NavigationMenu>
             <NavigationMenuList>
@@ -119,6 +122,27 @@ const SiteHeader = () => {
           </Button>
         </div>
       </div>
+      <nav className="space-y-4">
+        <motion.div
+          className="container hidden md:block"
+          initial={{opacity: 0, y: -20}}
+          whileInView={{opacity: 1, y: 0}}
+          viewport={{once: false}} // Triggers every time the element comes into view
+          transition={{duration: 0.5}}>
+          <Link href="/" className="flex cursor-pointer items-center  gap-1.5 pl-1">
+            <Image
+              src="/icons/logo.svg"
+              width={500}
+              height={500}
+              alt="horizon logo"
+              className=" size-12 max-xl:size-10"
+            />
+            <h1 className="text-black-1 font-bold text-3xl">Horizon Bank</h1>
+          </Link>
+        </motion.div>
+
+        <ProductNav />
+      </nav>
     </header>
   );
 };

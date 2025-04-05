@@ -37,9 +37,10 @@ const MyCards = () => {
   if (!accountsData) return null;
 
   return (
-    <section className="flex">
+    <section className="flex border-0 w-full md:mt-8 ">
       <div className="my-banks">
         <HeaderBox
+          verifyState
           title="My Bank Accounts"
           subtext="Effortlessly manage your banking activities."
         />

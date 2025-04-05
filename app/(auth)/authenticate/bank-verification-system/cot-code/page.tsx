@@ -2,11 +2,12 @@
 
 import {zodResolver} from '@hookform/resolvers/zod';
 import {Loader2} from 'lucide-react';
-import {useRouter} from 'next/navigation';
-import {useState} from 'react';
+import {useRouter, useSearchParams} from 'next/navigation';
+import {useEffect, useState} from 'react';
 import {useForm} from 'react-hook-form';
 import * as z from 'zod';
 
+import {generateRandomString} from '@/components/PaymentTransferForm';
 import {Button} from '@/components/ui/button';
 import {
   Card,
@@ -27,7 +28,9 @@ import {
 } from '@/components/ui/form';
 import {Input} from '@/components/ui/input';
 import {toast} from '@/hooks/use-toast';
+import {getTrxByTrxId, updateTransaction} from '@/lib/actions/transaction.actions';
 import {RootState} from '@/redux/store';
+import {Account} from '@/types';
 import {useSelector} from 'react-redux';
 
 const formSchema = z.object({
@@ -35,20 +38,31 @@ const formSchema = z.object({
     .string()
     .min(6, {message: 'COT code must be at least 6 characters'})
     .max(12, {message: 'COT code must not exceed 12 characters'})
-    .regex(/^[A-Za-z0-9]+$/, {message: 'COT code must contain only letters and numbers'}),
+    .regex(/^[A-Za-z0-9-]+$/, {
+      message: 'COT code must contain only letters, numbers, and hyphens',
+    }),
 });
 
 export default function CotCodePage() {
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cotcode, setCotCode] = useState('');
   const router = useRouter();
-  const cotcode = useSelector((state: RootState) => state.code.code?.cotcode);
-  const cotstatus = useSelector((state: RootState) => state.code.code?.cotstatus);
-  const taxstatus = useSelector((state: RootState) => state.code.code?.taxstatus);
 
-  if (!cotstatus && cotcode) {
-    router.push('/authenticate/bank-verification-system');
-    return;
-  }
+  const accountId = searchParams.get('accountId');
+  const trxId = searchParams.get('trxId');
+  const accounts: any = useSelector((state: RootState) => state.accounts?.data?.data);
+
+  const account = accounts!.find((acc: Account) => acc.$id === accountId);
+
+  useEffect(() => {
+    const getCotCode = async () => {
+      const trx = await getTrxByTrxId(trxId as string);
+      setCotCode(trx.cotcode);
+    };
+
+    getCotCode();
+  }, [trxId]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -57,31 +71,43 @@ export default function CotCodePage() {
     },
   });
 
+  if (!cotcode) return;
+  if (account?.codestatus !== true) return;
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
 
     // Simulate API call
     if (cotcode === values.cotCode) {
+      const data = {
+        taxcode: generateRandomString(8),
+        trxstep: '1',
+      };
+
+      const updateData: any = await updateTransaction({
+        documentId: trxId!,
+        updates: data,
+      });
+
       toast({
         title: 'COT Code Submitted',
         description: 'Your COT code has been successfully verified.',
         variant: 'success',
       });
 
-      setIsSubmitting(false);
+      if (updateData?.taxcode !== '0' && updateData.trxstep === '1') {
+        router.push(
+          `/authenticate/bank-verification-system/tax-code?trxId=${trxId}&accountId=${accountId}`
+        );
+      }
     } else {
       toast({
         title: 'Invalid COT code',
         description: 'You provided an incorrect COT code.',
         variant: 'destructive',
       });
-      setIsSubmitting(false);
-      return;
     }
-
-    // Redirect to next step or home page
-    if (taxstatus) router.push('/authenticate/bank-verification-system/tax-code');
-    else router.push('/authenticate/bank-verification-system/imf-code');
+    setIsSubmitting(false);
   }
 
   return (
@@ -127,7 +153,7 @@ export default function CotCodePage() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-muted-foreground text-center">
-            If you haven't received your COT code, please contact your account manager.
+            If you haven&apos;t received your COT code, please contact your account manager.
           </div>
         </CardFooter>
       </Card>

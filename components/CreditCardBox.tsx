@@ -38,7 +38,7 @@ const CreditCardBox = () => {
             </div>
             <div className="flex items-center space-x-2">
               <Button className="bg-[#3589FE] text-white text-sm rounded-md">Pay card</Button>
-              <Button className="flex gap-2  border border-[#3589FE] text-[#3589FE] text-sm rounded-md">
+              <Button className="flex gap-2  border border-[#3589FE] text-white  text-sm rounded-md">
                 More
                 {isCardOpen ? (
                   <ChevronUp className="h-5 w-5 text-muted-foreground" />

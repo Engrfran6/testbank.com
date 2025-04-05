@@ -8,7 +8,7 @@ import {RootState} from '@/redux/store';
 import {useSearchParams} from 'next/navigation';
 import {useSelector} from 'react-redux';
 
-const TransactionHistory = () => {
+const PendingTransaction = () => {
   const searchParams = useSearchParams();
 
   const id = searchParams.get('id');
@@ -39,12 +39,16 @@ const TransactionHistory = () => {
   const currentTransactions = transactions.slice(indexOfFirstTransaction, indexOfLastTransaction);
 
   const filterTransactions = currentTransactions.filter(
-    (transaction: any) => transaction.type === 'credit' || transaction.type === 'debit'
+    (transaction: any) => transaction.type !== 'credit' && transaction.type !== 'debit'
   );
 
   return (
     <div className="transactions border-0 w-full mt-4 md:mt-10">
-      <HeaderBox title="Transaction History" subtext="Most recent transcations" verifyState />
+      <HeaderBox
+        title="Incomplete Transactions"
+        subtext="Most recent pending transcations"
+        verifyState
+      />
 
       <div className="space-y-6">
         {id ? (
@@ -71,7 +75,7 @@ const TransactionHistory = () => {
         )}
 
         <section className="flex w-full flex-col gap-6">
-          <TransactionsTable transactions={filterTransactions} />
+          <TransactionsTable transactions={filterTransactions} finished={true} />
           {!transactions && (
             <p className="flex justify-center items-center p-48 italic text-gray-500 font-medium">
               You do not any transaction history
@@ -88,4 +92,4 @@ const TransactionHistory = () => {
   );
 };
 
-export default TransactionHistory;
+export default PendingTransaction;

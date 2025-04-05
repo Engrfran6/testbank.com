@@ -4,6 +4,7 @@ import HeaderBox from '@/components/HeaderBox';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {deleteUserAccount, updateUserAccount} from '@/lib/actions/user.actions';
+import {maskSSN} from '@/lib/utils';
 import {RootState} from '@/redux/store';
 import {setUser} from '@/redux/userSlice';
 import {User} from '@/types';
@@ -53,9 +54,9 @@ const AccountSettingsSection = () => {
     );
 
   return (
-    <div className="md:ml-4">
-      <Card className="border-0 w-full mt-8 md:p-8">
-        <CardContent className="space-y-6 mt-6">
+    <div className="">
+      <Card className="border-0 w-full mt-4 md:mt-20">
+        <CardContent className="space-y-6 ">
           <HeaderBox title="Account Settings" subtext="" verifyState />
 
           {user?.verification !== 'Verified' && (
@@ -64,7 +65,7 @@ const AccountSettingsSection = () => {
               <Link
                 href="/dashboard/client/finish-account-setup"
                 className="border rounded-md px-1 py-0.5 flex gap-0.5">
-                <span>Finish</span> {''}
+                <span>Finish</span>
                 <span>setup</span>
               </Link>
             </div>
@@ -77,13 +78,13 @@ const AccountSettingsSection = () => {
                 <CardTitle className="text-lg">Personal Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="">
+                <div className="pb-4 border-b">
                   <Image
                     src={user.photoId || '/icons/avatar.png'}
-                    width={20}
-                    height={20}
+                    width={500}
+                    height={500}
                     alt="image"
-                    className="h-16 w-16 rounded-full"
+                    className="h-20 w-20 rounded-full"
                   />
                 </div>
                 <div className="flex justify-between">
@@ -103,7 +104,7 @@ const AccountSettingsSection = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">SSN:</span>
                   <div className="flex items-center gap-2">
-                    <span>{showSSN ? user.ssn : `*** *** ${user.ssn}`}</span>
+                    <span>{showSSN ? user.ssn : `${maskSSN(user.ssn)}`}</span>
                     <Button variant="ghost" size="sm" onClick={() => setShowSSN(!showSSN)}>
                       {showSSN ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>

@@ -30,7 +30,7 @@ const ExternalAccountBox = () => {
             Link your external accounts to better organize your money, budget and plan for the
             future.
           </p>
-          <Button className="flex gap-2  border-2 border-[#3589FE] text-[#3589FE] text-sm rounded-md mx-auto">
+          <Button className="flex gap-2  border-2 border-[#3589FE] text-white  text-sm rounded-md mx-auto">
             <Link2 className="h-4 w-4" />
             <span>Link account</span>
           </Button>

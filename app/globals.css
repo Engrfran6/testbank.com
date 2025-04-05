@@ -109,7 +109,7 @@
   }
 
   .home-content {
-    @apply no-scrollbar flex w-full flex-1 flex-col gap-2 md:gap-10 px-5 sm:px-8 pb-7 lg:py-5 xl:max-h-screen xl:overflow-y-scroll;
+    @apply no-scrollbar flex w-full  flex-col gap-2 md:gap-10 px-4 sm:px-8 pb-7 lg:py-5 xl:max-h-screen xl:overflow-y-scroll;
   }
 
   .home-header {
@@ -154,7 +154,7 @@
 
   /* Right sidebar */
   .right-sidebar {
-    @apply no-scrollbar flex h-screen max-h-screen flex-col border-l border-gray-200 w-fit md:w-[480px] overflow-hidden md:overflow-y-scroll;
+    @apply no-scrollbar flex h-screen max-h-screen flex-col border-l border-gray-200  md:w-[620px] overflow-hidden md:overflow-y-scroll;
   }
 
   .profile-banner {
@@ -166,7 +166,7 @@
   }
 
   .profile-img {
-    @apply flex-center absolute -top-8 size-24 rounded-full bg-gray-100 border-8 border-white p-2 shadow-profile;
+    @apply flex-center absolute -top-8 size-24 rounded-full bg-gray-100 border-8 border-white shadow-profile;
   }
 
   .profile-details {

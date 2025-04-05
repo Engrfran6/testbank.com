@@ -27,9 +27,13 @@ const TransactionDetailsSlice = createSlice({
     setOtp(state, action: PayloadAction<string>) {
       state.otp = action.payload;
     },
+    clearTansactionDetails(state) {
+      state.TransactionDetails = null;
+    },
   },
 });
 
 // Export the action creator and the reducer
-export const {setTransactionDetails, setAccountId, setOtp} = TransactionDetailsSlice.actions; // <-- Ensure this export is correct
+export const {setTransactionDetails, setAccountId, setOtp, clearTansactionDetails} =
+  TransactionDetailsSlice.actions; // <-- Ensure this export is correct
 export default TransactionDetailsSlice.reducer;

@@ -8,6 +8,7 @@ import {parseStringify} from '../utils';
 const {
   APPWRITE_DATABASE_ID: DATABASE_ID,
   APPWRITE_TRANSACTION_COLLECTION_ID: TRANSACTION_COLLECTION_ID,
+  APPWRITE_PENDINGTRANSACTION_COLLECTION_ID: PENDINGTRANSACTION_COLLECTION_ID,
 } = process.env;
 
 export const createTransaction = async (transaction: CreateTransactionProps) => {
@@ -36,13 +37,17 @@ export const getTransactionsById = async ({accountId}: getTransactionsByIdProps)
     const senderTransactions = await database.listDocuments(
       DATABASE_ID!,
       TRANSACTION_COLLECTION_ID!,
-      [Query.equal('senderAccountId', accountId)]
+      [Query.equal('senderAccountId', accountId), Query.orderDesc('$createdAt')]
     );
 
     const receiverTransactions = await database.listDocuments(
       DATABASE_ID!,
       TRANSACTION_COLLECTION_ID!,
-      [Query.equal('receiverAccountId', accountId), Query.orderDesc('$createdAt')]
+      [
+        Query.equal('receiverAccountId', accountId),
+        Query.orderDesc('$createdAt'),
+        Query.orderDesc('$createdAt'),
+      ]
     );
 
     const transactions = {
@@ -81,6 +86,7 @@ export const getTransactions = async ({accountId}: getTransactionsProps) => {
         type: transaction.type,
         amount: transaction.amount,
         pending: transaction.pending,
+        tracktrxstage: transaction.tracktrxstage,
         $createdAt: transaction.$createdAt,
       }));
 
@@ -175,5 +181,66 @@ export const createAdminTransactionByAccountId = async (
     return parseStringify(newTransaction);
   } catch (error) {
     console.log(error);
+  }
+};
+
+export const getTrxByTrxId = async (documentId: string) => {
+  try {
+    const {database} = await createAdminClient();
+
+    const trx = await database.getDocument(DATABASE_ID!, TRANSACTION_COLLECTION_ID!, documentId);
+
+    return parseStringify(trx);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const createPendingTransaction = async (transaction: any, trxId: string) => {
+  try {
+    const {database} = await createAdminClient();
+
+    const newTransaction = await database.createDocument(
+      DATABASE_ID!,
+      PENDINGTRANSACTION_COLLECTION_ID!,
+      ID.unique(),
+      {
+        ...transaction,
+        trxId: trxId,
+      }
+    );
+
+    return parseStringify(newTransaction);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getPendingTransactionsById = async (trxId: string) => {
+  try {
+    const {database} = await createAdminClient();
+
+    const transactions = await database.listDocuments(
+      DATABASE_ID!,
+      PENDINGTRANSACTION_COLLECTION_ID!,
+      [Query.equal('trxId', trxId)]
+    );
+
+    return parseStringify(transactions.documents[0]);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const deletePendingTransaction = async ({trxId}: {trxId: string}) => {
+  try {
+    const {database} = await createAdminClient();
+
+    await database.deleteDocument(DATABASE_ID!, PENDINGTRANSACTION_COLLECTION_ID!, trxId);
+
+    return {message: 'pending transaction deleted successfully'};
+  } catch (error) {
+    console.error('Error deleting transaction:', error);
+    return {error: 'Failed to delete transaction'};
   }
 };

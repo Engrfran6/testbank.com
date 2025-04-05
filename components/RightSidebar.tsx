@@ -26,12 +26,13 @@ const RightSidebar = ({user, transactions, accounts}: RightSidebarProps) => {
         <div className="profile-banner" />
         <div className="profile">
           <div className="profile-img">
-            {user?.photo ? (
+            {user?.photoId ? (
               <Image
-                src={user?.photo || '/icons/plus.svg'}
-                width={100}
-                height={100}
-                alt="profile"
+                src={user.photoId || '/icons/avatar.png'}
+                width={500}
+                height={500}
+                alt="image"
+                className="w-full h-full object-fill rounded-full"
               />
             ) : (
               <span className="text-5xl font-bold text-blue-500">{user?.firstname[0]}</span>

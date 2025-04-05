@@ -279,7 +279,7 @@ const AuthForm = ({type, role}: {type: string; role: string}) => {
       </footer>
 
       <Dialog open={statusTrigger} onOpenChange={setStatusTrigger}>
-        <DialogContent className="sm:max-w-[425px] w-[90%] bg-red-100 border border-red-500 shadow-lg fixed top-[22%] left-1/2 -translate-x-1/2 rounded-lg">
+        <DialogContent className="sm:max-w-[425px] w-[90%] bg-red-100 border border-red-500 shadow-lg fixed top-[22%] md:top-[50%] left-1/2 -translate-x-1/2 rounded-lg">
           <DialogHeader>
             <DialogTitle className="text-red-900 font-semibold">
               {deactivationType === 'Suspended'
@@ -314,41 +314,6 @@ const AuthForm = ({type, role}: {type: string; role: string}) => {
           <DialogFooter>
             <Button
               className="bg-red-700 text-white hover:bg-red-800"
-              onClick={() => setStatusTrigger(false)}>
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={statusTrigger} onOpenChange={setStatusTrigger}>
-        <DialogContent className="sm:max-w-[425px] w-[90%] bg-red-50 border border-red-400 shadow-lg fixed top-[10%] left-1/2 -translate-x-1/2 rounded-lg">
-          <DialogHeader>
-            <DialogTitle className="text-red-700">⚠️ Account Suspended</DialogTitle>
-            <DialogDescription className="text-red-600">
-              Your account has been suspended. If you believe this is a mistake, please contact our
-              support team.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-2 text-sm text-red-700 bg-red-100 p-3 rounded-md">
-            <p>
-              📧 Email:{' '}
-              <a
-                href="mailto:support@example.com"
-                className="text-red-800 font-medium hover:underline">
-                support@example.com
-              </a>
-            </p>
-            <p>
-              📞 Phone:{' '}
-              <a href="tel:+1234567890" className="text-red-800 font-medium hover:underline">
-                +1 (234) 567-890
-              </a>
-            </p>
-          </div>
-          <DialogFooter>
-            <Button
-              className="bg-red-600 text-white hover:bg-red-700"
               onClick={() => setStatusTrigger(false)}>
               Close
             </Button>

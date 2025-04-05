@@ -6,14 +6,13 @@ import {SiderbarProps} from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
-import Footer from './Footer';
 
 const Sidebar = ({user}: SiderbarProps) => {
   const pathname = usePathname();
 
   return (
-    <section className="sidebar">
-      <nav className="flex flex-col gap-3">
+    <section className="pt-4 pb-2">
+      <nav className="flex gap-3">
         {sidebarLinks.map((item) => {
           const isActive = pathname == item.route;
           return (
@@ -21,7 +20,7 @@ const Sidebar = ({user}: SiderbarProps) => {
               href={item.route}
               key={item.label}
               className={cn('sidebar-link', {
-                'bg-bank-gradient': isActive,
+                'border-b-4 border-blue-700': isActive,
               })}>
               <div className="relative size-6">
                 <Image
@@ -29,18 +28,20 @@ const Sidebar = ({user}: SiderbarProps) => {
                   alt={item.label}
                   fill
                   className={cn({
-                    'brightness-[3] invert-0': isActive,
+                    'font-extrabold': isActive,
                   })}
                 />
               </div>
-              <p className={cn('sidebar-label', {'!text-white': isActive})}>{item.label}</p>
+              <p className={cn('sidebar-label', {'!text-blue-700 font-extrabold': isActive})}>
+                {item.label}
+              </p>
             </Link>
           );
         })}
         {/* <PlaidLink user={user} /> */}
       </nav>
 
-      <Footer user={user} type="desktop" />
+      {/* <Footer user={user} type="desktop" /> */}
     </section>
   );
 };

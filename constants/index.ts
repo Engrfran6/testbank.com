@@ -15,17 +15,23 @@ export const sidebarLinks = [
     label: 'Transaction History',
   },
   {
-    imgURL: '/icons/money-send.svg',
+    imgURL: '/icons/pending.png',
+    route: '/dashboard/client/pending-transactions',
+    label: 'Incomplete Transfers',
+  },
+  {
+    imgURL: '/icons/transfer.png',
     route: '/dashboard/client/payment-transfer',
     label: 'Transfer Funds',
   },
   {
-    imgURL: '/icons/money-send.svg',
+    imgURL: '/icons/deposit.png',
     route: '/dashboard/client/deposit-funds',
     label: 'Deposit Funds',
   },
+
   {
-    imgURL: '/icons/money-send.svg',
+    imgURL: '/icons/settings.png',
     route: '/dashboard/client/account-settings',
     label: 'Account settings',
   },

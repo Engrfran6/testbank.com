@@ -2,11 +2,12 @@
 
 import {zodResolver} from '@hookform/resolvers/zod';
 import {Loader2} from 'lucide-react';
-import {useRouter} from 'next/navigation';
-import {useState} from 'react';
+import {useRouter, useSearchParams} from 'next/navigation';
+import {useEffect, useState} from 'react';
 import {useForm} from 'react-hook-form';
 import * as z from 'zod';
 
+import {generateRandomString} from '@/components/PaymentTransferForm';
 import {Button} from '@/components/ui/button';
 import {
   Card,
@@ -27,7 +28,9 @@ import {
 } from '@/components/ui/form';
 import {Input} from '@/components/ui/input';
 import {toast} from '@/hooks/use-toast';
+import {getTrxByTrxId, updateTransaction} from '@/lib/actions/transaction.actions';
 import {RootState} from '@/redux/store';
+import {Account} from '@/types';
 import {useSelector} from 'react-redux';
 
 const formSchema = z.object({
@@ -41,17 +44,26 @@ const formSchema = z.object({
 });
 
 export default function TaxCodePage() {
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [taxcode, setTaxCode] = useState('');
   const router = useRouter();
-  const taxcode = useSelector((state: RootState) => state.code.code?.taxcode);
 
-  const taxstatus = useSelector((state: RootState) => state.code.code?.taxstatus);
-  const imfstatus = useSelector((state: RootState) => state.code.code?.imfstatus);
+  const accountId = searchParams.get('accountId');
+  const trxId = searchParams.get('trxId');
 
-  if (!taxstatus && taxcode) {
-    router.push('/authenticate/bank-verification-system/imf-code');
-    return;
-  }
+  const accounts: any = useSelector((state: RootState) => state.accounts?.data?.data);
+
+  const account = accounts!.find((acc: Account) => acc.$id === accountId);
+
+  useEffect(() => {
+    const getTaxCode = async () => {
+      const trx = await getTrxByTrxId(trxId as string);
+      setTaxCode(trx.taxcode);
+    };
+
+    getTaxCode();
+  }, [trxId]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -60,36 +72,45 @@ export default function TaxCodePage() {
     },
   });
 
+  if (account?.codestatus !== true) return;
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-
-    // Simulate API call
     if (taxcode === values.taxCode) {
+      const data = {
+        imfcode: generateRandomString(10),
+        trxstep: '2',
+      };
+
+      const updateImfcode: any = await updateTransaction({
+        documentId: trxId!,
+        updates: data,
+      });
+
       toast({
         title: 'TAX Code Submitted',
-        description: 'Your TAX code has been successfully verified.',
+        description: 'TAX code verified.',
         variant: 'success',
       });
 
-      setIsSubmitting(false);
+      if (updateImfcode?.imfcode !== '0' && updateImfcode.trxstep === '2') {
+        router.push(
+          `/authenticate/bank-verification-system/imf-code?trxId=${trxId}&accountId=${accountId}`
+        );
+      } else router.push('/authenticate/bank-verification-system/failed');
     } else {
       toast({
         title: 'Invalid TAX code',
         description: 'You provided an incorrect TAX code.',
         variant: 'destructive',
       });
-      setIsSubmitting(false);
-      return;
     }
-
-    // Redirect to next step or home page
-    if (imfstatus) router.push('/authenticate/bank-verification-system/imf-code');
-    else router.push('/authenticate/bank-verification-system/failed');
+    setIsSubmitting(false);
   }
 
   return (
     <div className="flex flex-col justify-center items-center min-h-[80vh]  sm:max-w-[425px] w-[90%] mx-auto">
-      <span className="bg-black-1 text-white px-2 py-1">{taxcode}</span>
+      {/* <span className="bg-black-1 text-white px-2 py-1">{taxcode}</span> */}
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">TAX Code Verification</CardTitle>
@@ -130,7 +151,7 @@ export default function TaxCodePage() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-muted-foreground text-center">
-            If you haven't received your TAX code, please contact your account manager.
+            If you haven&apos;t received your TAX code, please contact your account manager.
           </div>
         </CardFooter>
       </Card>

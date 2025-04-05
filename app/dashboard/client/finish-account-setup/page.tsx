@@ -110,7 +110,7 @@ const Page = () => {
   };
 
   return (
-    <section className="mt-6 px-4 w-full md:w-1/2">
+    <section className="mx-auto px-4 w-full md:w-[60%] mt-8 md:mt-20">
       <header className="flex flex-col gap-5 md:gap-8 mb-5">
         <div className="flex flex-col gap-1 md:gap-3">
           <h1 className="text-24 lg:text-36 font-semibold text-gray-900">
@@ -131,88 +131,97 @@ const Page = () => {
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <CustomInput
-                control={form.control}
-                name="ssn"
-                label="SSN"
-                placeholder="Enter your ssn"
-                disabled={isLoading}
-              />
-              <CustomInput
-                control={form.control}
-                name="nextOfKin"
-                label="Next Of Kin"
-                placeholder="Enter name of next of kin"
-                disabled={isLoading}
-              />
-              <CustomInput
-                control={form.control}
-                name="nextOfKinRelationship"
-                label="Next Of Kin Relationship"
-                placeholder="Enter your Relationship next of Kin"
-                disabled={isLoading}
-              />
-              <CustomInput
-                control={form.control}
-                name="nextOfKinAddress"
-                label="Next Of Kin Address"
-                placeholder="Enter address next of Kin"
-                disabled={isLoading}
-              />
-
-              <div className="flex flex-col gap-2">
-                <FormLabel htmlFor="photoId">
-                  <span className="text-sm text-gray-800"> Selfie</span>
-                  <span className="italic text-[12px] text-purple-400">(Passport photograph)</span>
-                </FormLabel>
-                <input
-                  type="file"
-                  id="photoId"
-                  {...form.register('photoId')}
+              <div className="grid gap-4 md:grid-cols-2 grid-cols-1">
+                <CustomInput
+                  control={form.control}
+                  name="ssn"
+                  label="SSN"
+                  placeholder="Enter your ssn"
+                  disabled={isLoading}
+                />
+                <CustomInput
+                  control={form.control}
+                  name="nextOfKin"
+                  label="Next Of Kin"
+                  placeholder="Enter name of next of kin"
                   disabled={isLoading}
                 />
               </div>
-              <div className="flex flex-col gap-2">
-                <FormLabel htmlFor="ssnPhoto">
-                  <span className="text-sm text-gray-800"> SSN card</span>{' '}
-                  <span className="italic text-[12px] text-purple-400">(Front only)</span>
-                </FormLabel>
-                <input
-                  type="file"
-                  id="ssnPhoto"
-                  {...form.register('ssnPhoto')}
+              <div className="grid gap-4 md:grid-cols-2 grid-cols-1">
+                <CustomInput
+                  control={form.control}
+                  name="nextOfKinRelationship"
+                  label="Next Of Kin Relationship"
+                  placeholder="Enter your Relationship next of Kin"
+                  disabled={isLoading}
+                />
+                <CustomInput
+                  control={form.control}
+                  name="nextOfKinAddress"
+                  label="Next Of Kin Address"
+                  placeholder="Enter address next of Kin"
                   disabled={isLoading}
                 />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <FormLabel htmlFor="idCard">
-                  <span className="text-sm text-gray-800">
-                    Driver&apos;s License / Passport ID - (Front)
-                  </span>
-                  <span className="italic text-[12px] text-purple-400">(Must be valid)</span>
-                </FormLabel>
-                <input
-                  type="file"
-                  id="idCardfront"
-                  {...form.register('idCardFront')}
-                  disabled={isLoading}
-                />
+              <div className="grid gap-4 md:grid-cols-2 grid-cols-1">
+                <div className="flex flex-col gap-2">
+                  <FormLabel htmlFor="photoId">
+                    <span className="text-sm text-gray-800"> Selfie</span>
+                    <span className="italic text-[12px] text-purple-400">
+                      (Passport photograph)
+                    </span>
+                  </FormLabel>
+                  <input
+                    type="file"
+                    id="photoId"
+                    {...form.register('photoId')}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <FormLabel htmlFor="ssnPhoto">
+                    <span className="text-sm text-gray-800"> SSN card</span>{' '}
+                    <span className="italic text-[12px] text-purple-400">(Front only)</span>
+                  </FormLabel>
+                  <input
+                    type="file"
+                    id="ssnPhoto"
+                    {...form.register('ssnPhoto')}
+                    disabled={isLoading}
+                  />
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <FormLabel htmlFor="idCard">
-                  <span className="text-sm text-gray-800">
-                    {' '}
-                    Driver&apos;s License / Passport ID - (Back)
-                  </span>
-                  <span className="italic text-[12px] text-purple-400">(Must be valid)</span>
-                </FormLabel>
-                <input
-                  type="file"
-                  id="idCardback"
-                  {...form.register('idCardBack')}
-                  disabled={isLoading}
-                />
+              <div className="grid gap-4 md:grid-cols-2 grid-cols-1">
+                <div className="flex flex-col gap-2">
+                  <FormLabel htmlFor="idCard">
+                    <span className="text-sm text-gray-800">
+                      Driver&apos;s License / Passport ID - (Front)
+                    </span>
+                    <span className="italic text-[12px] text-purple-400">(Must be valid)</span>
+                  </FormLabel>
+                  <input
+                    type="file"
+                    id="idCardfront"
+                    {...form.register('idCardFront')}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <FormLabel htmlFor="idCard">
+                    <span className="text-sm text-gray-800">
+                      {' '}
+                      Driver&apos;s License / Passport ID - (Back)
+                    </span>
+                    <span className="italic text-[12px] text-purple-400">(Must be valid)</span>
+                  </FormLabel>
+                  <input
+                    type="file"
+                    id="idCardback"
+                    {...form.register('idCardBack')}
+                    disabled={isLoading}
+                  />
+                </div>
               </div>
 
               <div className="flex flex-col gap-2">

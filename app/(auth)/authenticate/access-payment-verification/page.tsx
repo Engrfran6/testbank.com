@@ -12,16 +12,21 @@ import {
 } from '@/components/ui/form';
 import {InputOTP, InputOTPGroup, InputOTPSlot} from '@/components/ui/input-otp';
 import {toast} from '@/hooks/use-toast';
-import {updateTransaction} from '@/lib/actions/transaction.actions';
-import {maskPhone, parseStringify} from '@/lib/utils';
+import {
+  deletePendingTransaction,
+  getPendingTransactionsById,
+  getTrxByTrxId,
+  updateTransaction,
+} from '@/lib/actions/transaction.actions';
+import {maskEmail, maskPhone, parseStringify} from '@/lib/utils';
+import {setTransactionDetails} from '@/redux/createTransferDataSlice';
 import {RootState} from '@/redux/store'; // Import RootState
 import {addTransaction} from '@/redux/transactionSlice';
-// import {addTransaction} from '@/redux/transactionSlice';
-import {Transaction} from '@/types';
+import {Account, Transaction} from '@/types';
 import {zodResolver} from '@hookform/resolvers/zod';
 import {Loader2} from 'lucide-react';
-import {useRouter} from 'next/navigation';
-import {useState} from 'react';
+import {useRouter, useSearchParams} from 'next/navigation';
+import {useEffect, useState} from 'react';
 import {useForm} from 'react-hook-form';
 import {useDispatch, useSelector} from 'react-redux';
 import {z} from 'zod';
@@ -36,18 +41,27 @@ const TranssferVerification = () => {
   const dispatch = useDispatch();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [otp, setOtp] = useState<string | null>(null);
+  const [otp, setOtp] = useState<string>('');
 
   const user = useSelector((state: RootState) => state.user.user);
-  const storedOTP = useSelector((state: RootState) => state.transfer.otp);
-  const storedTransactionDetails = useSelector(
-    (state: RootState) => state.transfer.TransactionDetails
-  );
-  const storedAccountId = useSelector((state: RootState) => state.transfer.accountId);
 
-  setTimeout(() => {
-    setOtp(storedOTP);
-  }, 200);
+  const searchParams = useSearchParams();
+
+  const accountId = searchParams.get('accountId');
+  const trxId = searchParams.get('trxId');
+
+  const accounts: any = useSelector((state: RootState) => state.accounts?.data?.data);
+
+  const account = accounts!.find((acc: Account) => acc.$id === accountId);
+
+  useEffect(() => {
+    const getOtp = async () => {
+      const trx = await getTrxByTrxId(trxId as string);
+      setOtp(trx.otp);
+    };
+
+    getOtp();
+  }, [trxId]);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -63,10 +77,27 @@ const TranssferVerification = () => {
   const handleSubmitOTP = async (data: z.infer<typeof FormSchema>) => {
     setIsLoading(true);
 
-    if (data.pin === storedOTP) {
+    if (data.pin === otp) {
+      const data: any = await getPendingTransactionsById(trxId as string);
+
+      const newData = {
+        senderAccountId: data.senderAccountId,
+        receiverAccountId: data.receiverAccountId,
+        channel: data.channel,
+        accountNo: data.accountNo,
+        routingNo: data.routingNo,
+        recipientName: data.receipentName,
+        recipientBank: data.recieverBank,
+        email: data?.email,
+        userId: data?.userId,
+        amount: data.amount,
+        type: data.type,
+        category: data.category,
+      };
+
       const newTransaction: Transaction = await updateTransaction({
-        documentId: storedAccountId!,
-        updates: storedTransactionDetails!,
+        documentId: trxId!,
+        updates: newData,
       });
 
       if (newTransaction) {
@@ -80,14 +111,14 @@ const TranssferVerification = () => {
         };
 
         dispatch(addTransaction(thisTrx));
+        dispatch(setTransactionDetails(newTransaction));
+        await deletePendingTransaction({trxId: trxId as string});
 
         toast({
           variant: 'success',
           title: 'Success!',
-          description: `You have successfully transfered ${thisTrx.amount} to ${storedTransactionDetails?.accountNo} | ${storedTransactionDetails?.recipientName}`,
+          description: `You have successfully transfered ${thisTrx.amount} to ${data?.accountNo} | ${data?.recipientName}`,
         });
-
-        router.push('/dashboard/client');
       }
     } else {
       toast({
@@ -98,21 +129,24 @@ const TranssferVerification = () => {
     }
 
     setIsLoading(false);
+
+    router.push('/authenticate/success');
   };
 
-  const [selectedMethod, setSelectedMethod] = useState('');
+  const [selectedMethod, setSelectedMethod] = useState('email');
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const otpType = event.target.value;
     setSelectedMethod(otpType);
   };
 
+  if (account?.codestatus !== false) return;
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <span className="px-8 py-2 bg-black-1 text-white">{otp}</span>
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50">
+      <span></span>
       <div className="flex flex-col justify-center items-center bg-white p-6 rounded-lg shadow-lg mx-4 md:w-[35%] space-y-6">
         <div className="w-full">
-          {/* Dropdown */}
           <select
             onChange={handleChange}
             className="w-full bg-transparent border border-gray-300 rounded-md bg-blue-50 px-4 py-2 text-left focus:outline-none"
@@ -121,8 +155,9 @@ const TranssferVerification = () => {
             <option value={user?.phone}>{user?.phone}</option>
           </select>
         </div>
-        <h2 className="text-sm font-semibold text-center mb-4 text-blue-700">
-          A One Time Pass code has been sent to your email
+        <h2 className="text-sm font-semibold text-center mb-4 text-blue-700 border-b-2 pb-2">
+          A One Time Pass code has been sent to your registered email address:{''}
+          {maskEmail(user?.email as string)}
         </h2>
         <Form {...form}>
           <form
@@ -150,7 +185,7 @@ const TranssferVerification = () => {
                     Please enter the one-time password sent to your registered{' '}
                     {selectedMethod === 'phone'
                       ? `phone number: ${maskPhone(JSON.stringify(user?.phone))}`
-                      : `email address: ${user?.email}`}{' '}
+                      : `email address: ${user?.email}`}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
