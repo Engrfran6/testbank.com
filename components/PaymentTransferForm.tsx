@@ -86,6 +86,8 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
     },
   });
 
+  console.log('this is workinng');
+
   const accountId = searchParams.get('id') || accounts[0].$id;
 
   const account = accounts!.find((acc: Account) => acc.$id === accountId);
@@ -109,10 +111,113 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
     }
   }, [user]);
 
+  // const submit = async (data: z.infer<typeof formSchema>) => {
+  //   if (user?.verification === 'Not Verified') {
+  //     setTrigger(true);
+  //     return; // Stop execution
+  //   }
+  //   setIsLoading(true);
+
+  //   try {
+  //     if (status === 'inactive' || status === 'frozen') {
+  //       setStatusAlert(true);
+  //       return;
+  //     }
+
+  //     // Check if the amount exceeds the account balance
+  //     if (parseFloat(data.amount) > accountBalance) {
+  //       form.setError('amount', {
+  //         type: 'manual',
+  //         message: 'Insufficient balance',
+  //       });
+  //       return;
+  //     }
+
+  //     // Check if the amount exceeds the transfer limit
+  //     if (parseFloat(data.amount) > parseFloat(transferLimit)) {
+  //       setLimitAlert(true);
+  //       return;
+  //     }
+
+  //     if (parseFloat(data.amount) < parseFloat(mintransfer)) {
+  //       setLimitAlert2(true);
+  //       return;
+  //     }
+
+  //     // Create transfer transaction
+  //     const transaction = {
+  //       senderAccountId: accountId,
+  //       receiverAccountId: generateReceiverAccountId(20),
+  //       channel: 'online-mobile',
+  //       accountNo: data.accountNo,
+  //       routingNo: data.routingNo,
+  //       recipientName: data.receipentName,
+  //       recipientBank: data.recieverBank,
+  //       email: JSON.stringify(user?.email),
+  //       userId: user?.userId,
+  //       amount: parseFloat(data.amount),
+  //       type: 'debit',
+  //       category: 'Transfer',
+  //     };
+
+  //     const transactionType = {
+  //       description: data.transferNnote,
+  //       senderAccountId: accountId,
+  //       receiverAccountId: 'null',
+  //       channel: 'null',
+  //       accountNo: 'null',
+  //       routingNo: 'null',
+  //       recipientName: 'null',
+  //       recipientBank: 'null',
+  //       email: 'null',
+  //       userId: user?.userId,
+  //       amount: parseStringify(0.0),
+  //       type: 'null',
+  //       category: 'null',
+  //       ...(account?.codestatus === true
+  //         ? {cotcode: generateRandomString(6)}
+  //         : {otp: generatePin(6)}),
+  //     };
+
+  //     if (account?.codestatus === true) {
+  //       const createCodeTransaction: any = await createTransaction(transactionType);
+
+  //       if (createCodeTransaction?.cotcode) {
+  //         const data = await createPendingTransaction(transaction, createCodeTransaction.$id);
+  //         console.log('first==============', data);
+  //         if (data === undefined) return;
+  //       }
+  //       router.push(
+  //         `/authenticate/bank-verification-system?trxId=${createCodeTransaction.$id}&accountId=${account.$id}`
+  //       );
+  //     } else {
+  //       const createOtpTransaction: any = await createTransaction(transactionType);
+  //       if (createOtpTransaction.otp) {
+  //         const data = await createPendingTransaction(transaction, createOtpTransaction.$id);
+
+  //         console.log('first==============', data);
+  //         if (data === undefined) return;
+  //       }
+  //       router.push(
+  //         `/authenticate/access-payment-verification?trxId=${createOtpTransaction.$id}&accountId=${account?.$id}`
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.error('Submitting create transfer request failed: ', error);
+  //     form.setError('root', {
+  //       type: 'manual',
+  //       message: 'An error occurred while processing your request. Please try again.',
+  //     });
+  //   } finally {
+  //     // form.reset();
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const submit = async (data: z.infer<typeof formSchema>) => {
     if (user?.verification === 'Not Verified') {
       setTrigger(true);
-      return; // Stop execution
+      return;
     }
     setIsLoading(true);
 
@@ -122,7 +227,6 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
         return;
       }
 
-      // Check if the amount exceeds the account balance
       if (parseFloat(data.amount) > accountBalance) {
         form.setError('amount', {
           type: 'manual',
@@ -131,7 +235,6 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
         return;
       }
 
-      // Check if the amount exceeds the transfer limit
       if (parseFloat(data.amount) > parseFloat(transferLimit)) {
         setLimitAlert(true);
         return;
@@ -142,7 +245,6 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
         return;
       }
 
-      // Create transfer transaction
       const transaction = {
         senderAccountId: accountId,
         receiverAccountId: generateReceiverAccountId(20),
@@ -177,26 +279,29 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
           : {otp: generatePin(6)}),
       };
 
+      let redirectUrl = '';
+      let transactionId = '';
+
       if (account?.codestatus === true) {
-        const createCodeTransaction: any = await createTransaction(transactionType);
+        const createCodeTransaction = await createTransaction(transactionType);
+        transactionId = createCodeTransaction.$id;
 
         if (createCodeTransaction?.cotcode) {
-          const data = await createPendingTransaction(transaction, createCodeTransaction.$id);
-
-          if (data === undefined) return;
+          await createPendingTransaction(transaction, createCodeTransaction.$id);
         }
-        router.push(
-          `/authenticate/bank-verification-system?trxId=${createCodeTransaction.$id}&accountId=${account.$id}`
-        );
+        redirectUrl = `/authenticate/bank-verification-system?trxId=${transactionId}&accountId=${account.$id}`;
       } else {
-        const createOtpTransaction: any = await createTransaction(transactionType);
+        const createOtpTransaction = await createTransaction(transactionType);
+        transactionId = createOtpTransaction.$id;
+
         if (createOtpTransaction.otp) {
-          const data = await createPendingTransaction(transaction, createOtpTransaction.$id);
-          if (data === undefined) return;
+          await createPendingTransaction(transaction, createOtpTransaction.$id);
         }
-        router.push(
-          `/authenticate/access-payment-verification?trxId=${createOtpTransaction.$id}&accountId=${account?.$id}`
-        );
+        redirectUrl = `/authenticate/access-payment-verification?trxId=${transactionId}&accountId=${account?.$id}`;
+      }
+
+      if (redirectUrl) {
+        router.push(redirectUrl);
       }
     } catch (error) {
       console.error('Submitting create transfer request failed: ', error);
@@ -205,7 +310,6 @@ const PaymentTransferForm = ({user, accounts}: PaymentTransferFormProps) => {
         message: 'An error occurred while processing your request. Please try again.',
       });
     } finally {
-      // form.reset();
       setIsLoading(false);
     }
   };

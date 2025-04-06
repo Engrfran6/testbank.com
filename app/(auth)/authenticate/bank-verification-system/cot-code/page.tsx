@@ -112,7 +112,7 @@ export default function CotCodePage() {
 
   return (
     <div className="flex flex-col justify-center items-center min-h-[80vh] sm:max-w-[425px] w-[90%] mx-auto">
-      <span className="bg-black-1 text-white px-2 py-1">{cotcode}</span>
+      {/* <span className="bg-black-1 text-white px-2 py-1">{cotcode}</span> */}
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">COT Code Verification</CardTitle>
